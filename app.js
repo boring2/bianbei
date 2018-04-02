@@ -6,19 +6,9 @@ App({
       appId: 'bSlHOP5YhRoylMzN0cjNfKN2-gzGzoHsz',
       appKey: 'Kkhs2gTukXtYHLT2VLRJgkKq',
     });
-    // 声明一个 Todo 类型
-    var Todo = AV.Object.extend('Todo');
-    // 新建一个 Todo 对象
-    var todo = new Todo();
-    todo.set('title', '工程师周会');
-    todo.set('content', '每周工程师会议，周一下午2点');
-    todo.save().then(function (todo) {
-      // 成功保存之后，执行其他逻辑.
-      console.log('New object created with objectId: ' + todo.id);
-    }, function (error) {
-      // 异常处理
-      console.error('Failed to create new object, with error message: ' + error.message);
-    });
+
+    console.log(AV.User.current())
+
     // 展示本地存储能力
     var logs = wx.getStorageSync('logs') || []
     logs.unshift(Date.now())
@@ -38,7 +28,34 @@ App({
           wx.getUserInfo({
             success: res => {
               // 可以将 res 发送给后台解码出 unionId
-              this.globalData.userInfo = res.userInfo
+              AV.User.loginWithWeapp().then(user => {
+
+                this.globalData.user = user.toJSON();
+                user.set("nickName", res.userInfo.nickName)
+                user.save().then((u)=>{
+                  console.log("+++", u)
+                })
+                // console.log("---", this.globalData.user)
+              }).catch(console.error);
+              // this.globalData.userInfo = res.userInfo
+              console.log("----", AV.User.current())
+              console.log(res.userInfo)
+
+              // 新建一个角色，并把为当前用户赋予该角色
+              var roleAcl = new AV.ACL();
+              roleAcl.setPublicReadAccess(true);
+              roleAcl.setPublicWriteAccess(false);
+
+              // 当前用户是该角色的创建者，因此具备对该角色的写权限
+              roleAcl.setWriteAccess(AV.User.current(), true);
+
+              //新建角色
+              var administratorRole = new AV.Role('Administrator', roleAcl);
+              administratorRole.save().then(function (role) {
+                // 创建成功
+              }).catch(function (error) {
+                console.log(error);
+              });
 
               // 由于 getUserInfo 是网络请求，可能会在 Page.onLoad 之后才返回
               // 所以此处加入 callback 以防止这种情况
