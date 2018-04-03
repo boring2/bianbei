@@ -35,10 +35,14 @@ App({
               // 可以将 res 发送给后台解码出 unionId
               AV.User.loginWithWeapp().then(user => {
                 this.globalData.userInfo = res.userInfo
-                user.set("nickName", res.userInfo.nickName)
+                console.log(res.userInfo)
+                user.set(res.userInfo)
                 user.save().then((u) => {
-                  setUserRole(USER_ROLE.NORMAL.name, u)
+                  setUserRole(USER_ROLE.ADMIN.name, u)
                 })
+                user.getRoles().then(function (roles) {
+                  console.log(roles)
+                });
               }).catch(console.error)
             
               // 由于 getUserInfo 是网络请求，可能会在 Page.onLoad 之后才返回

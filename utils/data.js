@@ -19,7 +19,6 @@ function createRoles () {
 
 /// 获取Role
 function getRole(roleName) {
-  
   return new Promise((resolve, reject) => {
     var roleQuery = new AV.Query(AV.Role)
     roleQuery.equalTo('name', roleName)
@@ -45,7 +44,8 @@ function checkUserInRole (role, user) {
   roleQuery.equalTo('users', user)
   return new Promise((resolve, reject) => {
     roleQuery.find().then((roles) => {
-      if (roles.length) {
+      let filtered = roles.filter(value => value.getName() === role.getName())
+      if (filtered.length) {
         console.log("user in role --", role)
         resolve(true)
       } else {
