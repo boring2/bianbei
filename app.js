@@ -1,7 +1,7 @@
 //app.js
 const AV = require('./libs/av-weapp-min.js');
 import { USER_ROLE } from './utils/constant.js'
-import { setUserRole, createRoles } from './utils/data.js'
+import { setUserRole, createRoles, getRole, createTopic, createIdea, getTopic } from './utils/data.js'
 
 App({
   onLaunch: function () {
@@ -38,7 +38,36 @@ App({
                 console.log(res.userInfo)
                 user.set(res.userInfo)
                 user.save().then((u) => {
-                  setUserRole(USER_ROLE.ADMIN.name, u)
+                  return setUserRole(USER_ROLE.ADMIN.name, u)
+                }).then((role) => {
+                  // createTopic("third")
+                  getTopic().then((topics) => {
+                    let topic = topics[0]
+                    console.log(topic.toJSON())
+                    if (!topic) {
+                      return
+                    }
+                    this.globalData.currentTopic = topic
+                    return createIdea(topic, "第一个内容")
+                  }).then((idea) => {
+                    if(!idea) {
+                      return
+                    }
+                    console.log(idea)
+                  }).catch((error) => {
+                    console.error(error)
+                  })
+                  // createTopic("第一个主题").then((topic) => {
+                  //   return createIdea(topic)
+                  // }).then((idea) => {
+                  //   console.log(idea)
+                  // }).catch((error) => {
+                  //   console.error(error)
+                  // })
+                  try {
+                    wx.setStorageSync('role', role.getName())
+                  } catch (e) {}
+
                 })
                 user.getRoles().then(function (roles) {
                   console.log(roles)
@@ -60,6 +89,8 @@ App({
     })
   },
   globalData: {
-    userInfo: null
+    userInfo: null,
+    role: null,
+    currentTopic: null
   }
 })

@@ -62,28 +62,46 @@ function checkUserInRole (role, user) {
 /// 设置用户角色
 function setUserRole(roleName) {
   var user = AV.User.current()
-  getRole(roleName).then((role) => {
-    checkUserInRole(role, user).then((isIn) => {
-      if (!isIn) {
-        console.log(role, '----')
-        role.getUsers().add(user)
-        return role.save()
-      } else {
-        return 
-      }
-    }).then((role) => {
-      if (role) { 
-        console.log("role set success")
-      } else {
-        console.log("role has been set")
-      }
-      
+  return new Promise((resolve, reject) => {
+    getRole(roleName).then((role) => {
+      checkUserInRole(role, user).then((isIn) => {
+        if (!isIn) {
+          console.log(role, '----')
+          role.getUsers().add(user)
+          return role.save()
+        } else {
+          resolve(role)
+          return
+        }
+      }).then((role) => {
+        resolve(role)
+        if (role) {
+          console.log("role set success")
+        } else {
+          console.log("role has been set")
+        }
+
+      }).catch((error) => {
+        reject(error)
+        console.error("role set error --", error)
+      })
     }).catch((error) => {
-      console.error("role set error --", error)
+      reject(error)
+      console.error("setUserRole error", error)
     })
-  }).catch((error) => {
-    console.error("setUserRole error", error)
   })
+}
+
+function isRole(user, roleName) {
+  try {
+    var localRoleName = wx.getStorageSync('role')
+    if (localRoleName === USER_ROLE.ADMIN.name || localRoleName === roleName) {
+      return true
+    }
+    return false
+  } catch (e) {
+    console.error("isRole error", e)
+  }
 }
 
 /// 表声明
@@ -102,31 +120,97 @@ function createUser(name, role) {
   return user
 }
 
+function _generateRoleACL (roleName) {
+  var role = new AV.Role(roleName)
+  var acl = new AV.ACL()
+  acl.setPublicReadAccess(true)
+  acl.setPublicWriteAccess(false)
+  acl.setRoleWriteAccess(role, true)
+  return acl
+}
+
+function _generateUserACL(user) {
+  var role = new AV.Role(roleName)
+  var acl = new AV.ACL()
+  acl.setPublicReadAccess(true)
+  acl.setPublicWriteAccess(false)
+  acl.setWriteAccess(user, true)
+  return acl
+}
 /**
 创建topic
 Topic {
 	content: "第一个话题"，
-	user: $userReference,
+	user: $user,
 	versions: [[], [], []] // length <= 3
 }
 */
 function createTopic(content, user) {
+  user = user || AV.User.current()
+  let defaultTopic = {
+    content: content,
+    user: user,
+    versions: []
+  }
   let topic = new Topic()
-  topic.set('content', content)
-  topic.set('user', user)
-  if (user.get('role') === USER_ROLE.ADMIN) {
-    topic.save().then(() => {
-      console.log("Topic create success")
-    }, (error) => {
-      console.error("create topic fail", error)
-    })
+  topic.set(defaultTopic)
+  if (isRole(user, USER_ROLE.ADMIN.name)) {
+    let acl = _generateRoleACL(USER_ROLE.ADMIN.name)
+    topic.setACL(acl)
+    return topic.save()
   } else {
-    console.error('user has no permission')
+    console.error('user has no permission to create topic')
   }
 }
 
+function getTopic() {
+  let query = new AV.Query(Topic)
+  return query.find()
+}
+
+/**
+ * 创建Idea
+ * let idea = {
+    topic: $topic,
+    content: "content",
+    user: $user,
+    like: 0,
+    unlike: 0,
+    report: 0,
+    nextIdeas: [“idea的引用”]   //小于等于3
+  }
+ */
+
+function createIdea (topic, content) {
+  let user = AV.User.current()
+  if (!content || content.trim() === "") {
+    console.error("请输入content")
+    return
+  }
+  
+  let defaultIdea = {
+    topic: topic,
+    content: content,
+    user: user,
+    like: 0,
+    unlike: 0,
+    report: 0,
+    nextIdeas: [] //小于等于3
+  }
+  let idea = new Idea()
+  idea.set(defaultIdea)
+  if (isRole(user, USER_ROLE.NORMAL.name)) {
+    let acl = _generateRoleACL(USER_ROLE.NORMAL.name)
+    idea.setACL(acl)
+    return idea.save()
+  } else {
+    console.error('user has no permission to create idea')
+  }
+}
 module.exports = {
   createTopic,
+  getTopic,
+  createIdea,
   createUser,
   createRoles,
   getRole,
