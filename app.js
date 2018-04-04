@@ -38,24 +38,24 @@ App({
                 console.log(res.userInfo)
                 user.set(res.userInfo)
                 user.save().then((u) => {
+                  
                   return setUserRole(USER_ROLE.ADMIN.name, u)
                 }).then((role) => {
-                  // createTopic("third")
-                  getTopic().then((topics) => {
-                    let topic = topics[0]
-                    console.log(topic.toJSON())
-                    if (!topic) {
-                      return
+                  console.log(user.getSessionToken())
+                 
+                  wx.request({
+                    url: 'http://localhost:3000/topic', //仅为示例，并非真实的接口地址
+                    method: "post",
+                    data: {
+                      content: "testsssss"
+                    },
+                    header: {
+                      'content-type': 'application/json', // 默认值
+                      'X-LC-Session': user.getSessionToken()
+                    },
+                    success: function (res) {
+                      console.log(res.data)
                     }
-                    this.globalData.currentTopic = topic
-                    return createIdea(topic, "第一个内容")
-                  }).then((idea) => {
-                    if(!idea) {
-                      return
-                    }
-                    console.log(idea)
-                  }).catch((error) => {
-                    console.error(error)
                   })
                   // createTopic("第一个主题").then((topic) => {
                   //   return createIdea(topic)

@@ -14,13 +14,22 @@ router.get('/', function(req, res, next) {
   }).catch(next);
 });
 
-// 新增 Todo 项目
+// 新增 Topic 项目
 router.post('/', function(req, res, next) {
   var content = req.body.content;
-  var todo = new Todo();
-  todo.set('content', content);
-  todo.save().then(function(todo) {
-    res.redirect('/todos');
+  var user = req.currentUser
+  console.log("+++++++", user)
+  AV.User.become(req.headers["x-lc-session"]).then(function(user) {
+    let defaultTopic = {
+      content: content,
+      user: user,
+      versions: []
+    }
+    var topic = new Topic();
+    topic.set(defaultTopic);
+    return topic.save()
+  }).then(function(topic) {
+    res.send(topic)
   }).catch(next);
 });
 

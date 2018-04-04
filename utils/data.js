@@ -168,6 +168,19 @@ function getTopic() {
   return query.find()
 }
 
+function createNewVersion (versions, ideaNum) {
+  if (versions.length >= 3) {
+    console.error("you can't create version greater than 3")
+    return
+  }
+  if (versions.length === 0) {
+    versions[0] = []
+    return versions
+  } else if (versions.length < versionNum) {
+    // versions[]
+  }
+
+}
 /**
  * 创建Idea
  * let idea = {
@@ -179,10 +192,16 @@ function getTopic() {
     report: 0,
     nextIdeas: [“idea的引用”]   //小于等于3
   }
+ * versionNum 0,1,2
  */
 
-function createIdea (topic, content) {
+function createIdea (topic, content, versionNum) {
   let user = AV.User.current()
+  versionNum = parseInt(versionNum) || 0
+  if (versionNum > 2) {
+    console.error("version number can't greater than 2")
+    return
+  }
   if (!content || content.trim() === "") {
     console.error("请输入content")
     return
@@ -197,8 +216,14 @@ function createIdea (topic, content) {
     report: 0,
     nextIdeas: [] //小于等于3
   }
+  let versions = topic.get('versions')
+  if (!versions[versionNum]) {
+    versions[versionNum] = []
+  }
+  
   let idea = new Idea()
   idea.set(defaultIdea)
+  versions[versionNum].push(idea)
   if (isRole(user, USER_ROLE.NORMAL.name)) {
     let acl = _generateRoleACL(USER_ROLE.NORMAL.name)
     idea.setACL(acl)
