@@ -6,13 +6,19 @@ const USER_ROLE = require('../utils/constant')
 
 var Topic = AV.Object.extend('Topic')
 
+router.get('/than3', function(req, res, next) {
+	var query = new AV.Query(Topic)
+	query.lessThan('versionCount', 50)
+	query.find().then(function(results) {
+		res.send(results)
+	}).catch(next)
+})
+
 // 查询 Topic 列表
 router.get('/', function(req, res, next) {
 	var query = new AV.Query(Topic)
 	query.find().then(function(results) {
 		res.send(results)
-	}, function(err) {
-		next(err)
 	}).catch(next)
 })
 
@@ -21,6 +27,7 @@ router.post('/', function(req, res, next) {
 	var content = req.body.content
 	AV.User.become(req.headers['x-lc-session']).then(function(user) {
 		let defaultTopic = {
+			versionCount: 0,
 			content: content,
 			user: user,
 			versions: []
