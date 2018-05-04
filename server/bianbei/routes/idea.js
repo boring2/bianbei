@@ -35,8 +35,8 @@ router.post('/', function(req, res, next) {
 	var content = req.body.content
 	console.log(topicId, content)
 	var userPromise = AV.User.become(req.headers['x-lc-session'])
-	var topicQuery = new AV.Query(Topic)
-	var topicPromise = topicQuery.get(topicId, {useMasterKey: true})
+	var topicQuery = new AV.Query('Topic')
+	var topicPromise = topicQuery.get(topicId)
 	Promise.all([topicPromise, userPromise]).then((result) => {
 		var topic = result[0]
 		var user = result[1]
@@ -85,5 +85,49 @@ router.post('/', function(req, res, next) {
 		console.log(e)
 	})
 })
+
+// 点赞idea
+router.post('/like', likeHander('like'))
+// 点踩idea
+router.post('/unlike', likeHander('unlike'))
+// 举报idea
+router.post('/report', likeHander('report'))
+
+/**
+ * 
+ * @param {String} type "like", "unlike", "report"
+ */
+function likeHander (type) {
+	let userType = type + "s"
+	return function (req, res, next) {
+		let id = req.query.id
+		if (!id) {
+			throw new Error('NO ID.')
+		}
+		let userPromise = AV.User.become(req.headers['x-lc-session'])
+		let ideaQuery = new AV.Query(Idea)
+		var ideaPromise = ideaQuery.get(id)
+		Promise.all([userPromise, ideaPromise]).then((result) => {
+			let user = result[0]
+			let idea = result[1]
+			let likes = user.get(userType) || []
+			likes = likes.filter((likeIdea) => {
+				return likeIdea.id === idea.id
+			})
+			if (likes.length) {
+				throw new Error(`You have ${type} the idea.`)
+			}
+			user.addUnique(userType, idea)
+			idea.increment(type, 1)
+			idea.fetchWhenSave = true
+			return user.save()
+		}).then((result) => {
+			res.send("success")
+		}).catch((e) => {
+			res.send(e.message)
+		})
+	}
+}
+
 
 module.exports = router
