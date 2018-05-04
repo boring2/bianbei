@@ -60,6 +60,7 @@ router.post('/', function(req, res, next) {
 			// var newTopic = AV.Object.createWithoutData('Topic', topic.id)
 			console.log('noPretopicid')
 			topic.increment('versionCount', 1)
+			topic.set('versions', [])
 			return topic.save(null, {
 				fetchWhenSave: true,
 				query: new AV.Query('Topic').lessThan('versionCount', 3)

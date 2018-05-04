@@ -27,7 +27,6 @@ router.post('/', function(req, res, next) {
 	var content = req.body.content
 	AV.User.become(req.headers['x-lc-session']).then(function(user) {
 		let defaultTopic = {
-			versionCount: 0,
 			content: content,
 			user: user,
 			versions: []

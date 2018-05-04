@@ -32,7 +32,9 @@ App({
 					// 已经授权，可以直接调用 getUserInfo 获取头像昵称，不会弹框
 					wx.getUserInfo({
 						success: res => {
-            
+              AV.User.loginWithWeapp().then(user => {
+                console.log(user.getSessionToken())
+              })
               // AV.User.logIn("Tom", "tom123").then((user) => {
               //   console.log(user.getSessionToken())
               //   wx.request({
