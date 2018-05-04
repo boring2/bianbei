@@ -2,7 +2,7 @@
 var router = require('express').Router()
 var AV = require('leanengine')
 var aclGen = require('../utils/acl')
-const USER_ROLE = require('../utils/constant')
+const USER_ROLE_CONSTANT = require('../utils/constant').USER_ROLE_CONSTANT
 
 var Topic = AV.Object.extend('Topic')
 
@@ -32,7 +32,7 @@ router.post('/', function(req, res, next) {
 			versions: []
 		}
 		var topic = new Topic()
-		var acl = aclGen.createRoleACL(USER_ROLE.ADMIN)
+		var acl = aclGen.createRoleACL(USER_ROLE_CONSTANT.ADMIN)
 		topic.set(defaultTopic)
 		topic.setACL(acl)
 		return topic.save(null, {sessionToken:req.headers['x-lc-session']})

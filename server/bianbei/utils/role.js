@@ -10,14 +10,14 @@ function createRoles () {
 		roleAcl.setPublicReadAccess(roleObj.read)
     roleAcl.setPublicWriteAccess(roleObj.write)
     var role = new AV.Role(roleObj.name, roleAcl)
-		ps.push(role.save())
+		ps.push(role.save(null, {useMasterKey: true}))
   }
   AV.Promise.all(ps).then(([adminRole, normalRole]) => {
     var roleAcl = new AV.ACL()
     roleAcl.setPublicReadAccess(true)
     roleAcl.setPublicWriteAccess(false)
     roleAcl.setRoleWriteAccess(adminRole, true)
-    adminRole.getRoles().add(normalRole)
+    normalRole.getRoles().add(adminRole)
     adminRole.setACL(roleAcl)
     return adminRole.save(null, {useMasterKey: true})
   }).then((adminRole) => {

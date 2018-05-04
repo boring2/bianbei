@@ -4,6 +4,8 @@ var AV = require('leanengine')
 var aclGen = require('../utils/acl')
 var Idea = AV.Object.extend('Idea')
 var Topic = AV.Object.extend('Topic')
+var Version = AV.Object.extend('Verion')
+
 // 查询 Idea 列表
 router.get('/', function(req, res, next) {
 	var query = new AV.Query(Idea)
@@ -30,13 +32,28 @@ router.get('/than', function(req, res, next) {
 })
 // 新增 idea 项目
 router.post('/', function(req, res, next) {
-	var preIdeaId = req.body.preIdeaId
+	///需要传入 versionId, topicId, preIdeaId, idea content, isCheckout
+	var versionId = req.body.versionId
 	var topicId = req.body.topicId
+	var preIdeaId = req.body.preIdeaId
 	var content = req.body.content
-	console.log(topicId, content)
+	var isCheckout = req.body.isCheckout
 	var userPromise = AV.User.become(req.headers['x-lc-session'])
 	var topicQuery = new AV.Query('Topic')
-	var topicPromise = topicQuery.get(topicId)
+	var topicPromise = topicQuery.get(topicId, {sessionToken: req.headers['x-lc-session']})
+
+	/// 如果没有verionId那应该也没有preIdeaId，判断topic versions length是否小于等于3，是的话追加一个新的version到topic上，
+	if (!versionId && !preIdeaId) {
+		topicPromise.then((topic) => {
+			
+		})
+		///有的话 判断是否checkout，不checkout
+	} else if (!isCheckout) {
+
+		/// checkout
+	} else {
+
+	}
 	Promise.all([topicPromise, userPromise]).then((result) => {
 		var topic = result[0]
 		var user = result[1]
@@ -47,7 +64,7 @@ router.post('/', function(req, res, next) {
 			like: 0,
 			unlike: 0,
 			report: 0,
-			nextIdeas: [] //小于等于3
+			nextIdea: undefined 
 		}
 		let idea = new Idea()
 		console.log('111111111111111111')
@@ -57,34 +74,24 @@ router.post('/', function(req, res, next) {
 		console.log('22222222222222')
 		// idea.save()
 		if (!preIdeaId) {
-			// var newTopic = AV.Object.createWithoutData('Topic', topic.id)
 			console.log('noPretopicid')
-			topic.increment('versionCount', 1)
-			topic.set('versions', [])
+			topic.add('versions', [idea])
 			return topic.save(null, {
-				fetchWhenSave: true,
-				query: new AV.Query('Topic').lessThan('versionCount', 3)
-			}).then(() => {
-				topic.add('versions', [idea])
-				return topic.save()
+				useMasterKey: true
 			}).then((re) => {
 				res.send(re)
 			}).catch((e) => {
-				console.log('save topic error', e.code)
-				next()
+				console.log('save topic error', e)
+				res.send(e)
 			})
 		}
-		// return idea.save(null, {
-		// 	query: new AV.Query('Idea').equalTo('unlike', 2)
-		// }).then((idea) => {
-		// 	res.send(idea)
-		// }).catch((err) => {
-		// 	console.log('error', err)
-		// 	next(err)
-		// })
 	}).catch((e) => {
-		console.log(e)
+		res.send(e)
 	})
+})
+
+router.post('/checkout', (req, res, next) => {
+
 })
 
 // 点赞idea
