@@ -12,18 +12,23 @@ function createRoles () {
     var role = new AV.Role(roleObj.name, roleAcl)
 		ps.push(role.save(null, {useMasterKey: true}))
   }
-  AV.Promise.all(ps).then(([adminRole, normalRole]) => {
-    var roleAcl = new AV.ACL()
-    roleAcl.setPublicReadAccess(true)
-    roleAcl.setPublicWriteAccess(false)
-    roleAcl.setRoleWriteAccess(adminRole, true)
-    normalRole.getRoles().add(adminRole)
-    adminRole.setACL(roleAcl)
-    return adminRole.save(null, {useMasterKey: true})
-  }).then((adminRole) => {
-    console.log('------------', adminRole)
+  Promise.all(ps).then(() => {
+    ps = [getRole(USER_ROLE_CONSTANT.NORMAL), getRole(USER_ROLE_CONSTANT.ADMIN)]
+    AV.Promise.all(ps).then(([normalRole, adminRole]) => {
+      var roleAcl = new AV.ACL()
+      roleAcl.setPublicReadAccess(true)
+      roleAcl.setPublicWriteAccess(false)
+      roleAcl.setRoleWriteAccess(adminRole, true)
+      normalRole.getRoles().add(adminRole)
+      adminRole.setACL(roleAcl)
+      return normalRole.save(null, {useMasterKey: true})
+    }).then((normalRole) => {
+      console.log('------------', normalRole)
+    }).catch((e) => {
+      console.log('get normal and admin error. ', e)
+    })
   }).catch((e) => {
-    console.log(e)
+    console.log('create roles error. ', e)
   })
 }
 

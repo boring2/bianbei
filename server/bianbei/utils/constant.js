@@ -1,3 +1,4 @@
+var AV = require('leanengine')
 const USER_ROLE_CONSTANT = {
 	ADMIN: 'Administrator',
 	NORMAL: 'Normal',
@@ -17,7 +18,15 @@ const USER_ROLE = {
   BLACK: { name: 'Black', read: true, write: false }
 }
 
+const DM = {
+	Idea: AV.Object.extend('Idea'),
+	Topic: AV.Object.extend('Topic'),
+	Version: AV.Object.extend('Version'),
+	User: AV.Object.extend('User')
+}
+
 module.exports = {
 	USER_ROLE,
-	USER_ROLE_CONSTANT
+	USER_ROLE_CONSTANT,
+	DM
 }

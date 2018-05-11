@@ -2,13 +2,11 @@
 var router = require('express').Router()
 var AV = require('leanengine')
 var aclGen = require('../utils/acl')
-var Idea = AV.Object.extend('Idea')
-var Topic = AV.Object.extend('Topic')
-var Version = AV.Object.extend('Verion')
-
+var creator = require('../utils/creator')
+var DM = require('../utils/constant').DM
 // 查询 Idea 列表
 router.get('/', function(req, res, next) {
-	var query = new AV.Query(Idea)
+	var query = new AV.Query(DM.Idea)
 	query.find().then(function(results) {
 		res.send(results)
 	}, function(err) {
@@ -17,11 +15,11 @@ router.get('/', function(req, res, next) {
 })
 
 router.get('/than', function(req, res, next) {
-	let idea = AV.Object.createWithoutData('Idea', '5ad75172ee920a3f73359fd5')
+	let idea = AV.Object.createWithoutData(DM.Idea, '5ad75172ee920a3f73359fd5')
 	idea.increment('unlike', 1)
 	idea.save(null, {
 		fetchWhenSave: true,
-		query: new AV.Query('Idea').lessThan('unlike', 5),
+		query: new AV.Query(DM.Idea).lessThan('unlike', 5),
 		sessionToken: req.headers['x-lc-session']
 	}).then((re) => {
 		res.send(re)
@@ -38,56 +36,92 @@ router.post('/', function(req, res, next) {
 	var preIdeaId = req.body.preIdeaId
 	var content = req.body.content
 	var isCheckout = req.body.isCheckout
-	var userPromise = AV.User.become(req.headers['x-lc-session'])
-	var topicQuery = new AV.Query('Topic')
-	var topicPromise = topicQuery.get(topicId, {sessionToken: req.headers['x-lc-session']})
+	var sessionToken = req.headers['x-lc-session']
+	var userPromise = AV.User.become(sessionToken)
+	var topicQuery = new AV.Query(DM.Topic)
+	var topicPromise = topicQuery.get(topicId, {sessionToken: sessionToken})
+	console.log("------------")
+	var versionQuery = new AV.Query(DM.Version)
 
-	/// 如果没有verionId那应该也没有preIdeaId，判断topic versions length是否小于等于3，是的话追加一个新的version到topic上，
+	/// 如果没有verionId那应该也没有preIdeaId，判断topic versions length是否小于等于3，是的话追加一个新的version到topic上.
 	if (!versionId && !preIdeaId) {
-		topicPromise.then((topic) => {
-			
+		AV.Promise.all([topicPromise, userPromise]).then(([topic, user]) => {
+			let idea = creator.createIdea(topic, content, user)
+			let version = creator.createVersion([idea], topic)
+			if (topic.get('versions').length < 3) {
+				topic.addUnique('versions', version)
+				return topic.save(null, { sessionToken })
+			} else {
+				throw '该主题已经有三个故事线了。'
+			}
+		}).then((topic) => {
+			res.send(topic)
+		}).catch((e) => {
+			console.log("----------", e)
+			res.send(e)
 		})
-		///有的话 判断是否checkout，不checkout
-	} else if (!isCheckout) {
-
-		/// checkout
+		
 	} else {
-
-	}
-	Promise.all([topicPromise, userPromise]).then((result) => {
-		var topic = result[0]
-		var user = result[1]
-		let defaultIdea = {
-			topic: topic,
-			content: content,
-			user: user,
-			like: 0,
-			unlike: 0,
-			report: 0,
-			nextIdea: undefined 
-		}
-		let idea = new Idea()
-		console.log('111111111111111111')
-		idea.set(defaultIdea)
-		var acl = aclGen.createUserAcl(user)
-		idea.setACL(acl)
-		console.log('22222222222222')
-		// idea.save()
-		if (!preIdeaId) {
-			console.log('noPretopicid')
-			topic.add('versions', [idea])
-			return topic.save(null, {
-				useMasterKey: true
-			}).then((re) => {
-				res.send(re)
+		///有的话 判断是否checkout，不checkout, 追加在version的idea中
+		var ideaQuery = new AV.Query(DM.Idea)
+		var preIdeaPromise = ideaQuery.get(preIdeaId, {sessionToken})
+		versionQuery.include('topic')
+		var versionPromise = versionQuery.get(versionId, { sessionToken })
+		if (!isCheckout) {
+			AV.Promise.all([versionPromise, preIdeaPromise, userPromise]).then(([version, preIdea, user]) => {
+				// 上一个idea的nextIdeas为空数组
+				if (preIdea.get('nextIdeas').length === 0) {
+					let topic = version.get('topic')
+					let idea = creator.createIdea(topic, content, user)
+					preIdea.addUnique('nextIdeas', idea)
+					version.add('ideas', idea)
+					return preIdea.save(null, { useMasterKey: true })
+						.then(() => {
+							return version.save(null, {sessionToken})
+						}).then(() => {
+							res.send('create idea success')
+						})
+					/// 如果上一个idea有nextIdea字段， 则提示用户手慢了。
+				} else {
+					throw '该版本已经被人捷足先登。你可以创建新的故事线。'
+				}
 			}).catch((e) => {
-				console.log('save topic error', e)
+				console.log('-------- create idea error no checkout', e)
+				res.send(e)
+			})
+		} else {
+			/// 如果有带checkout参数。
+			AV.Promise.all([versionPromise, preIdeaPromise, userPromise]).then(([oldVersion, preIdea, user]) => {
+				if (preIdea.get('nextIdeas').length < 3) {
+					let oldIdeas = oldVersion.get('ideas')
+					let topic = oldVersion.get('topic')
+					console.log('--------', topic)
+					let idea = creator.createIdea(topic, content, user)
+					let newIdeas = oldIdeas.slice(0, -1)
+					newIdeas.push(idea)
+					let version = creator.createVersion(newIdeas, topic)
+					preIdea.addUnique('nextIdeas', idea)
+					if (topic.get('versions').length < 3) {
+						topic.addUnique('versions', version)
+						return topic.save(null, { sessionToken }).then(() => {
+							return preIdea.save(null, { useMasterKey: true })
+						}).then(() => {
+							res.send('成功创建新的故事线。')
+						})
+					} else {
+						throw 'Topic has three versions.'
+					}
+					/// 如果上一个idea有nextIdea字段并且大于3， 则提示用户版本满了。
+				} else {
+					throw '该主题已经有三个版本了，不能再创建新的故事线了。'
+				}
+			}).catch((e) => {
+				console.log(e)
 				res.send(e)
 			})
 		}
-	}).catch((e) => {
-		res.send(e)
-	})
+		
+	}
 })
 
 router.post('/checkout', (req, res, next) => {
@@ -113,7 +147,7 @@ function likeHander (type) {
 			throw new Error('NO ID.')
 		}
 		let userPromise = AV.User.become(req.headers['x-lc-session'])
-		let ideaQuery = new AV.Query(Idea)
+		let ideaQuery = new AV.Query(DM.Idea)
 		var ideaPromise = ideaQuery.get(id)
 		Promise.all([userPromise, ideaPromise]).then((result) => {
 			let user = result[0]
