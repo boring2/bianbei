@@ -16,10 +16,10 @@ Page({
   //事件处理函数
   bindViewTap: function() {
     console.log(CONSTANT)
-    let me = data.createUser('boring', CONSTANT.USER_ROLE.ADMIN)
+    // let me = data.createUser('boring', CONSTANT.USER_ROLE.ADMIN)
     // let xiaoming = data.createUser('小明', CONSTANT.USER_ROLE.NORMAL)
-    console.log(me)
-    data.createTopic('第一个主题', me)
+    // console.log(me)
+    // data.createTopic('第一个主题', me)
     // data.createTopic('第二个主题', xiaoming)
 
     wx.navigateTo({
