@@ -39,16 +39,16 @@ router.post('/signup', (req, res, next) => {
 	let username = req.body.username
 	let password = req.body.password
 	// 新建 AVUser 对象实例
-  var user = new AV.User()
-  // 设置用户名
-  user.setUsername(username)
-  // 设置密码
-  user.setPassword(password);
+	var user = new AV.User()
+	// 设置用户名
+	user.setUsername(username)
+	// 设置密码
+	user.setPassword(password)
   // 设置邮箱
   // user.setEmail('tom@leancloud.cn')
   user.signUp().then((loginedUser) => {
 		res.send(loginedUser.getSessionToken())
-  }).catch(e => {
+	}).catch(e => {
 		res.send(e)
 	})
 })
@@ -90,7 +90,7 @@ router.post('/username', function (req, res, next) {
 	let username = req.body.username
 	AV.User.become(req.headers['x-lc-session']).then(function(user) {
 		console.log('-----------', user)
-		user.set("username", username)
+		user.set('username', username)
 		return user.save(null, {sessionToken: req.headers['x-lc-session']})
 	}).then((user) => {
 		res.send(user)
