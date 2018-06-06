@@ -1,0 +1,16 @@
+<style lang="less">
+</style>
+<template>
+  <view class="container">
+    past
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+export default class Past extends wepy.page {
+  onLoad() {
+
+  }
+}
+</script>
