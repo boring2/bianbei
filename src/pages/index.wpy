@@ -1,28 +1,98 @@
 <style lang="less">
-  .userinfo {
+  .todayTitle {
+    font-size: 50rpx;
+    text-align: center;
+    padding: 20rpx;
+  }
+
+  .version-btns {
+    width: 100%;
+    display: flex;
+    margin-bottom: 40rpx;
+    justify-content: center;
+    padding: 0 20rpx;
+    box-sizing: border-box;
+    .version-btn {
+      display: inline-block;
+    }
+  }
+
+  .idea-view {
+    padding: 0 20rpx;
+  }
+
+  .ideaInfo {
     display: flex;
     flex-direction: column;
-    align-items: center;
-  }
+    align-items: flex-start;
+    margin-bottom: 20rpx;
 
-  .userinfo-avatar {
-    width: 80rpx;
-    height: 80rpx;
-    border-radius: 50%;
-  }
+    .ideaInfo-top {
+      display: flex;
+      align-items: center;
+      border: 1px solid black;
+      border-top-left-radius: 20rpx;
+      border-top-right-radius: 20rpx;
+      width: 100%;
+      padding: 20rpx;
+      background: rgba(110, 224, 244, 0.5);
+      box-sizing: border-box;
+    }
 
-  .userinfo-nickname {
-    color: #aaa;
+    .ideaInfo-bottom {
+      width: 100%;
+      padding: 20rpx;
+      box-sizing: border-box;
+      border-left: 1px solid black;
+      border-right: 1px solid black;
+      border-bottom: 1px solid black;
+    }
+
+    .ideaInfo-avatar {
+      width: 80rpx;
+      height: 80rpx;
+      border-radius: 50%;
+      border: 1px solid black;
+    }
+
+    .ideaInfo-nickname {
+      color: black;
+      padding-left: 20rpx;
+      font-size: 35rpx;
+    }
   }
 </style>
+
 <template>
+  <view class="todayTitle">
+    {{todayTitle}}
+  </view>
+  <view wx:if="{{versionCount > 1}}" class="version-btns">
+    <repeat for="{{versions}}" key="index" index="index" item="versionNum">
+      <button class="version-btn">version {{versionNum}}</button>
+    </repeat>
+  </view>
+  <view class="idea-view">
+    <repeat for="{{list}}" key="index" index="index" item="idea">
+      <view data-idea="{{idea}}" class="ideaInfo" @tap="handleIdeaTap">
+        <view class="ideaInfo-top">
+          <image class="ideaInfo-avatar" src="{{ idea.avatarUrl }}" background-size="cover"/>
+          <view class="ideaInfo-nickname">{{ idea.username }}</view>
+        </view>
+
+        <view class="ideaInfo-bottom">
+          <text class="ideaInfo-content">{{ idea.content }}</text>
+        </view>
+      </view>
+    </repeat>
+  </view>
   <view class="container">
     <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
 
-    <view class="userinfo" @tap="handleViewTap">
+    <!-- <view class="userinfo" @tap="handleViewTap">
       <image class="userinfo-avatar" src="{{ userInfo.avatarUrl }}" background-size="cover"/>
       <view class="userinfo-nickname">{{ userInfo.nickName }}</view>
-    </view>
+    </view> -->
 
     <panel>
       <view class="title" slot="title">aa</view>
@@ -89,6 +159,14 @@
   import Toast from 'wepy-com-toast'
   import testMixin from '../mixins/test'
 
+  let testData = [
+    {id: '111', content: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahajdklasjdkjaskldjalsjdlkjslkdjsaldjlsajldjsklj', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'}
+  ]
   console.log('moduleA ignored: ', moduleA) // => moduleA ignored: {}
 
   export default class Index extends wepy.page {
@@ -107,11 +185,14 @@
     mixins = [testMixin]
 
     data = {
-      mynum: 20,
+      versionCount: 3,
+      todayTitle: 'Today Title',
       userInfo: {
         nickName: '加载中...'
       },
       hasUserInfo: false,
+      list: testData,
+      mynum: 20,
       normalTitle: '原始标题',
       setTimeoutTitle: '标题三秒后会被修改',
       count: 0,
@@ -165,10 +246,22 @@
     computed = {
       now () {
         return +new Date()
+      },
+      versions () {
+        let result = []
+        for (let i = 0; i < this.versionCount; i++) {
+          result.push(i + 1)
+        }
+        return result
       }
+
     }
 
     methods = {
+      handleIdeaTap (e) {
+        let idea = e.currentTarget.dataset.idea
+        console.log(idea)
+      },
       plus () {
         this.mynum++
       },
@@ -187,13 +280,9 @@
       },
 
       getUserInfo: function(e) {
-        // console.log(e)
-        var self = this
-        this.$parent.getUserInfo(function (info) {
-          self.userInfo = info.userInfo
-          self.$apply()
-        })
-        // console.log(this.userInfo)
+        this.userInfo = e.detail.userInfo
+        this.hasUserInfo = true
+        this.$parent.globalData.userInfo = e.detail.userInfo
       },
 
       communicate () {
@@ -232,13 +321,20 @@
     }
 
     onLoad() {
-      let self = this
-      console.log('userinfo---', this.userInfo)
-      this.$parent.getUserInfo(function (info) {
-        if (info) {
-          self.userInfo = info.userInfo
+      let that = this
+      wx.getSetting({
+        success: function(res) {
+          if (res.authSetting['scope.userInfo']) {
+            wx.getUserInfo({
+              success: function(res) {
+                that.userInfo = res.userInfo
+                that.hasUserInfo = true
+                that.$parent.globalData.userInfo = res.userInfo
+                that.$apply()
+              }
+            })
+          }
         }
-        self.$apply()
       })
     }
   }

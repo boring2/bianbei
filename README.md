@@ -1,5 +1,8 @@
 ### ps如果出现app crash可能是node版本问题。
 
+### 本地小程序调试
+wepy build --watch
+
 # Node.js Getting started
 在 LeanCloud 云引擎上使用 Express 的 Node.js 实例项目。
 

@@ -1,4 +1,7 @@
 <style lang="less">
+view, text {
+  word-break: break-all;
+}
 .container {
   height: 100%;
   display: flex;
