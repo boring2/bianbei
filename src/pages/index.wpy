@@ -18,6 +18,7 @@
 <template>
   <view class="container">
     <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
+
     <view class="userinfo" @tap="handleViewTap">
       <image class="userinfo-avatar" src="{{ userInfo.avatarUrl }}" background-size="cover"/>
       <view class="userinfo-nickname">{{ userInfo.nickName }}</view>
@@ -186,8 +187,13 @@
       },
 
       getUserInfo: function(e) {
-        console.log(e)
-        this.userInfo = this.$parent.getUserInfo()
+        // console.log(e)
+        var self = this
+        this.$parent.getUserInfo(function (info) {
+          self.userInfo = info.userInfo
+          self.$apply()
+        })
+        // console.log(this.userInfo)
       },
 
       communicate () {
@@ -227,18 +233,11 @@
 
     onLoad() {
       let self = this
-      this.$parent.getUserInfo(function (userInfo) {
-        if (userInfo) {
-          self.userInfo = userInfo
+      console.log('userinfo---', this.userInfo)
+      this.$parent.getUserInfo(function (info) {
+        if (info) {
+          self.userInfo = info.userInfo
         }
-        self.normalTitle = '标题已被修改'
-
-        self.setTimeoutTitle = '标题三秒后会被修改'
-        setTimeout(() => {
-          self.setTimeoutTitle = '到三秒了'
-          self.$apply()
-        }, 3000)
-
         self.$apply()
       })
     }

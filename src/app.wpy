@@ -91,11 +91,12 @@ export default class extends wepy.app {
   }
 
   async getUserInfo(cb) {
-    if (this.globalData.userInfo) {
-      return this.globalData.userInfo
-    }
+    // if (this.globalData.userInfo) {
+    //   cb(this.globalData.userInfo)
+    //   return this.globalData.userInfo
+    // }
     try {
-      this.globalData.userInfo = await wepy.getUserInfo
+      this.globalData.userInfo = await wepy.getUserInfo()
       cb && cb(this.globalData.userInfo)
     } catch (e) {
       console.log('getUserInfo', e)
