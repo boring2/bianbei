@@ -1,4 +1,7 @@
 <style lang="less">
+  view {
+    box-sizing: border-box;
+  }
   .todayTitle {
     font-size: 50rpx;
     text-align: center;
@@ -8,17 +11,17 @@
   .version-btns {
     width: 100%;
     display: flex;
-    margin-bottom: 40rpx;
+    margin: 40rpx 0;
     justify-content: center;
     padding: 0 20rpx;
-    box-sizing: border-box;
     .version-btn {
       display: inline-block;
+      font-size: 30rpx;
     }
   }
 
   .idea-view {
-    padding: 0 20rpx;
+    padding: 0 40rpx;
   }
 
   .ideaInfo {
@@ -36,16 +39,26 @@
       width: 100%;
       padding: 20rpx;
       background: rgba(110, 224, 244, 0.5);
-      box-sizing: border-box;
     }
 
     .ideaInfo-bottom {
       width: 100%;
       padding: 20rpx;
-      box-sizing: border-box;
+      border-left: 1px solid black;
+      border-right: 1px solid black;
+    }
+
+    .ideaInfo-feedback {
+      width: 100%;
+      text-align: right;
       border-left: 1px solid black;
       border-right: 1px solid black;
       border-bottom: 1px solid black;
+      button {
+        display: inline-block;
+        font-size: 30rpx;
+        margin-right: 10rpx;
+      }
     }
 
     .ideaInfo-avatar {
@@ -61,92 +74,119 @@
       font-size: 35rpx;
     }
   }
+
+  .reply {
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    display: block;
+    background: white;
+    border: 1px solid black;
+  }
+  .hide {
+    display: none !important;
+  }
 </style>
 
 <template>
-  <view class="todayTitle">
-    {{todayTitle}}
-  </view>
-  <view wx:if="{{versionCount > 1}}" class="version-btns">
-    <repeat for="{{versions}}" key="index" index="index" item="versionNum">
-      <button class="version-btn">version {{versionNum}}</button>
-    </repeat>
-  </view>
-  <view class="idea-view">
-    <repeat for="{{list}}" key="index" index="index" item="idea">
-      <view data-idea="{{idea}}" class="ideaInfo" @tap="handleIdeaTap">
-        <view class="ideaInfo-top">
-          <image class="ideaInfo-avatar" src="{{ idea.avatarUrl }}" background-size="cover"/>
-          <view class="ideaInfo-nickname">{{ idea.username }}</view>
-        </view>
-
-        <view class="ideaInfo-bottom">
-          <text class="ideaInfo-content">{{ idea.content }}</text>
-        </view>
-      </view>
-    </repeat>
-  </view>
-  <view class="container">
-    <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
-
-    <!-- <view class="userinfo" @tap="handleViewTap">
-      <image class="userinfo-avatar" src="{{ userInfo.avatarUrl }}" background-size="cover"/>
-      <view class="userinfo-nickname">{{ userInfo.nickName }}</view>
-    </view> -->
-
-    <panel>
-      <view class="title" slot="title">aa</view>
-
-      <text class="info">{{normalTitle}}</text>
-      <text class="info">{{setTimeoutTitle}}</text>
-      <text class="info">{{mixin}}</text>
-      <text class="info">{{mynum}}</text>
-      <text class="info">{{now}}</text>
-      <button @tap="plus('a')" size="mini">  +  </button>
-    </panel>
-
-    <panel>
-      <view class="title" slot="title">其它测试</view>
-      <button @tap="toast" size="mini">第三方组件</button>
-      <button @tap="communicate" size="mini">组件通信</button>
-      <button @tap="tap" size="mini">混合TAP事件</button>
-    </panel>
-
-    <panel>
-      <view class="title" slot="title">测试并发网络请求</view>
-      <view>返回结果: <text>{{netrst}}</text></view>
-      <button @tap="request" size="mini"> 点我发起10个请求 </button>
-    </panel>
-
-    <panel>
-      <view class="title" slot="title">测试组件</view>
-
-      <text class="testcounter">计数组件1: </text>
-      <view class="counterview">
-        <counter1 @index-emit.user="counterEmit" />
-      </view>
-
-      <text class="testcounter">计数组件2: </text>
-
-      <view class="counterview">
-        <counter2 :num.sync="mynum"></counter2>
-      </view>
-    </panel>
-
-    <panel>
-      <view class="title" slot="title">测试组件Repeat</view>
-      <repeat for="{{groupList}}" index="index" item="item" key="key">
-        <group :grouplist="item" :indexa="index"></group>
+  <scroll-view id="ideaContainer">
+    <view class="todayTitle">
+      {{todayTitle}}
+    </view>
+    <view wx:if="{{versionCount > 1}}" class="version-btns">
+      <repeat for="{{versions}}" key="index" index="index" item="versionNum">
+        <button class="version-btn" @tap="changeVersion" data-versionNum="{{index}}">故事 {{versionNum}}</button>
       </repeat>
-    </panel>
+    </view>
+    <view class="idea-view">
+      <repeat for="{{list}}" key="index" index="index" item="idea">
+        <view class="ideaInfo">
+          <view class="ideaInfo-top">
+            <image class="ideaInfo-avatar" src="{{ idea.avatarUrl }}" background-size="cover"/>
+            <view class="ideaInfo-nickname">{{ idea.username }}</view>
+          </view>
 
-    <panel>
-      <view class="title" slot="title">测试列表</view>
-      <list></list>
-    </panel>
+          <view class="ideaInfo-bottom">
+            <text class="ideaInfo-content">{{ idea.content }}</text>
+          </view>
 
-    <toast />
-  </view>
+          <view class="ideaInfo-feedback">
+            <button data-index="{{index}}" data-type="liked" @tap="handleFeedBtn">赞 {{ idea.liked }}</button>
+            <button data-index="{{index}}" data-type="unliked" @tap="handleFeedBtn">踩 {{ idea.unliked }}</button>
+            <button data-index="{{index}}" data-type="reported"  @tap="handleFeedBtn">举报 {{ idea.reported }}</button>
+            <button @tap="handleReply" class="{{index !== (list.length - 1) ? 'hide' : ''}}">回复</button>
+            <button @tap="handleCheckout" class="{{versionCount >= 3 ? 'hide' : ''}}">切分支</button>
+          </view>
+        </view>
+      </repeat>
+    </view>
+    <view class="reply {{isReplying ? '' : 'hide'}}}">
+      <input placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true"/>
+    </view>
+
+    <view class="container">
+      <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
+
+      <!-- <view class="userinfo" @tap="handleViewTap">
+        <image class="userinfo-avatar" src="{{ userInfo.avatarUrl }}" background-size="cover"/>
+        <view class="userinfo-nickname">{{ userInfo.nickName }}</view>
+      </view> -->
+
+      <panel>
+        <view class="title" slot="title">aa</view>
+
+        <text class="info">{{normalTitle}}</text>
+        <text class="info">{{setTimeoutTitle}}</text>
+        <text class="info">{{mixin}}</text>
+        <text class="info">{{mynum}}</text>
+        <text class="info">{{now}}</text>
+        <button @tap="plus('a')" size="mini">  +  </button>
+      </panel>
+
+      <panel>
+        <view class="title" slot="title">其它测试</view>
+        <button @tap="toast" size="mini">第三方组件</button>
+        <button @tap="communicate" size="mini">组件通信</button>
+        <button @tap="tap" size="mini">混合TAP事件</button>
+      </panel>
+
+      <panel>
+        <view class="title" slot="title">测试并发网络请求</view>
+        <view>返回结果: <text>{{netrst}}</text></view>
+        <button @tap="request" size="mini"> 点我发起10个请求 </button>
+      </panel>
+
+      <panel>
+        <view class="title" slot="title">测试组件</view>
+
+        <text class="testcounter">计数组件1: </text>
+        <view class="counterview">
+          <counter1 @index-emit.user="counterEmit" />
+        </view>
+
+        <text class="testcounter">计数组件2: </text>
+
+        <view class="counterview">
+          <counter2 :num.sync="mynum"></counter2>
+        </view>
+      </panel>
+
+      <panel>
+        <view class="title" slot="title">测试组件Repeat</view>
+        <repeat for="{{groupList}}" index="index" item="item" key="key">
+          <group :grouplist="item" :indexa="index"></group>
+        </repeat>
+      </panel>
+
+      <panel>
+        <view class="title" slot="title">测试列表</view>
+        <list></list>
+      </panel>
+
+      <toast />
+    </view>
+  </scroll-view>
 </template>
 
 <script>
@@ -160,12 +200,24 @@
   import testMixin from '../mixins/test'
 
   let testData = [
-    {id: '111', content: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahajdklasjdkjaskldjalsjdlkjslkdjsaldjlsajldjsklj', username: 'boring', avatarUrl: 'xxxx'},
+    [{id: '111', content: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahajdklasjdkjaskldjalsjdlkjslkdjsaldjlsajldjsklj', username: 'boring', avatarUrl: 'xxxx', liked: 1, unliked: 1, reported: 1},
     {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
     {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
     {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
     {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'}
+    {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'}],
+    [{id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'}],
+    [{id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+    {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'}]
   ]
   console.log('moduleA ignored: ', moduleA) // => moduleA ignored: {}
 
@@ -185,13 +237,15 @@
     mixins = [testMixin]
 
     data = {
-      versionCount: 3,
+      versionCount: testData.length,
       todayTitle: 'Today Title',
       userInfo: {
         nickName: '加载中...'
       },
       hasUserInfo: false,
-      list: testData,
+      currentVersion: 0,
+      list: testData[0],
+      isReplying: false,
       mynum: 20,
       normalTitle: '原始标题',
       setTimeoutTitle: '标题三秒后会被修改',
@@ -258,9 +312,30 @@
     }
 
     methods = {
-      handleIdeaTap (e) {
-        let idea = e.currentTarget.dataset.idea
-        console.log(idea)
+      changeVersion (e) {
+        let num = e.currentTarget.dataset.versionnum
+        this.currentVersion = num
+        this.list = testData[num]
+      },
+      handleFeedBtn (e) {
+        let type = e.currentTarget.dataset.type
+        let index = e.currentTarget.dataset.index
+        if (!this.list[index][type]) {
+          this.list[index][type] = 1
+        } else {
+          this.list[index][type] += 1
+        }
+      },
+      handleReply (e) {
+        this.isReplying = true
+        console.log(e)
+      },
+      finishEnter (e) {
+        this.isReplying = false
+        console.log(e.detail.value)
+      },
+      handleCheckout (e) {
+
       },
       plus () {
         this.mynum++
