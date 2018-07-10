@@ -46,6 +46,7 @@ app.use('/todos', require('./routes/todos'))
 app.use('/topic', require('./routes/topic'))
 app.use('/idea', require('./routes/idea'))
 app.use('/user', require('./routes/user'))
+app.use('/version', require('./routes/version'))
 
 app.use(function(req, res, next) {
 	// 如果任何一个路由都没有返回响应，则抛出一个 404 异常给后续的异常处理器

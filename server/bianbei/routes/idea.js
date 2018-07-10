@@ -4,6 +4,18 @@ var AV = require('leanengine')
 var aclGen = require('../utils/acl')
 var creator = require('../utils/creator')
 var DM = require('../utils/constant').DM
+
+router.get('/:id', function (req, res, next) {
+	let id = req.params.id
+	var query = new AV.Query(DM.Idea)
+		query.include('user')
+		query.get(id, {
+			sessionToken: req.headers['x-lc-session']
+	}).then((results) => {
+		res.send(results)
+	}).catch(next)
+})
+
 // 查询 Idea 列表
 router.get('/', function (req, res, next) {
 	var query = new AV.Query(DM.Idea)
@@ -153,7 +165,7 @@ router.post('/unlike', likeHander('unlike'))
 router.post('/report', likeHander('report'))
 
 /**
- * 
+ *
  * @param {String} type "like", "unlike", "report"
  */
 function likeHander(type) {

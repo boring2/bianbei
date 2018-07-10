@@ -91,12 +91,15 @@
 
 <template>
   <scroll-view id="ideaContainer">
+    <view class="container">
+      <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
+    </view>
     <view class="todayTitle">
       {{todayTitle}}
     </view>
     <view wx:if="{{versionCount > 1}}" class="version-btns">
       <repeat for="{{versions}}" key="index" index="index" item="versionNum">
-        <button class="version-btn" @tap="changeVersion" data-versionNum="{{index}}">故事 {{versionNum}}</button>
+        <button class="version-btn" @tap="changeVersion({{index}})">故事 {{versionNum}}</button>
       </repeat>
     </view>
     <view class="idea-view">
@@ -112,9 +115,9 @@
           </view>
 
           <view class="ideaInfo-feedback">
-            <button data-index="{{index}}" data-type="liked" @tap="handleFeedBtn">赞 {{ idea.liked }}</button>
-            <button data-index="{{index}}" data-type="unliked" @tap="handleFeedBtn">踩 {{ idea.unliked }}</button>
-            <button data-index="{{index}}" data-type="reported"  @tap="handleFeedBtn">举报 {{ idea.reported }}</button>
+            <button @tap="handleFeedBtn({{index}}, 'like')">赞 {{ idea.like }}</button>
+            <button @tap="handleFeedBtn({{index}}, 'unlike')">踩 {{ idea.unlike }}</button>
+            <button @tap="handleFeedBtn({{index}}, 'report')">举报 {{ idea.report }}</button>
             <button @tap="handleReply" class="{{index !== (list.length - 1) ? 'hide' : ''}}">回复</button>
             <button @tap="handleCheckout" class="{{versionCount >= 3 ? 'hide' : ''}}">切分支</button>
           </view>
@@ -122,7 +125,8 @@
       </repeat>
     </view>
     <view class="reply {{isReplying ? '' : 'hide'}}}">
-      <input placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true"/>
+      <input placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput"/>
+      <button @tap="send">发送</button>
     </view>
 
     <view class="container">
@@ -198,9 +202,11 @@
   import Group from '../components/group'
   import Toast from 'wepy-com-toast'
   import testMixin from '../mixins/test'
+  import AV from 'leancloud-storage'
+  import api from '../utils/api'
 
   let testData = [
-    [{id: '111', content: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahajdklasjdkjaskldjalsjdlkjslkdjsaldjlsajldjsklj', username: 'boring', avatarUrl: 'xxxx', liked: 1, unliked: 1, reported: 1},
+    [{id: '111', content: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahajdklasjdkjaskldjalsjdlkjslkdjsaldjlsajldjsklj', username: 'boring', avatarUrl: 'xxxx', like: 1, unlike: 1, report: 1},
     {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
     {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
     {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
@@ -246,6 +252,7 @@
       currentVersion: 0,
       list: testData[0],
       isReplying: false,
+      inputValue: '',
       mynum: 20,
       normalTitle: '原始标题',
       setTimeoutTitle: '标题三秒后会被修改',
@@ -312,14 +319,11 @@
     }
 
     methods = {
-      changeVersion (e) {
-        let num = e.currentTarget.dataset.versionnum
+      changeVersion (num, e) {
         this.currentVersion = num
         this.list = testData[num]
       },
-      handleFeedBtn (e) {
-        let type = e.currentTarget.dataset.type
-        let index = e.currentTarget.dataset.index
+      handleFeedBtn (index, type) {
         if (!this.list[index][type]) {
           this.list[index][type] = 1
         } else {
@@ -331,8 +335,15 @@
         console.log(e)
       },
       finishEnter (e) {
+        // this.isReplying = false
+        // console.log(e.detail.value)
+      },
+      bindKeyInput (e) {
+        this.inputValue = e.detail.value
+      },
+      send () {
         this.isReplying = false
-        console.log(e.detail.value)
+        console.log(this.inputValue)
       },
       handleCheckout (e) {
 
@@ -358,6 +369,7 @@
         this.userInfo = e.detail.userInfo
         this.hasUserInfo = true
         this.$parent.globalData.userInfo = e.detail.userInfo
+        // this.login(this.userInfo)
       },
 
       communicate () {
@@ -395,6 +407,66 @@
       }
     }
 
+    async login (userInfo) {
+      let data = []
+
+      try {
+        /// TODO. 这个影响了加载速度 先查找了topic然后查找了version，然后查找了idea
+        let user = await AV.User.loginWithWeapp()
+        await user.set(userInfo).save()
+        let topic = await api.getFirstTopic()
+        this.todayTitle = topic.data.content
+        let versions = topic.data.versions
+        this.versionCount = versions.length
+        let versionsPs = []
+        for (let i = 0; i < versions.length; i++) {
+          let a = await api.getVersion(versions[i].objectId)
+          versionsPs.push(a)
+        }
+        let ps = {}
+        for (let i = 0; i < versionsPs.length; i++) {
+          if (!ps[i]) {
+            ps[i] = []
+          }
+          let ideas = versionsPs[i].data.ideas
+          for (let j = 0; j < ideas.length; j++) {
+            let a = await api.getIdea(ideas[j].objectId, AV.User.current().getSessionToken())
+            ps[i].push(a)
+          }
+        }
+
+        for (let i in ps) {
+          data.push(this._resolveData(ps[i]))
+          testData = data
+          this.list = data[0]
+        }
+        this.$apply()
+      } catch (e) {
+        let promise = this.$invoke('toast', 'show', {
+          title: '发生错误，\n请在公众号留言'
+        })
+        promise.then((d) => {
+          console.log('toast done')
+        })
+      }
+    }
+
+    _resolveData (rawData) {
+      let res = []
+      rawData.forEach((raw) => {
+        let resolveData = {}
+        resolveData.id = raw.data.objectId
+        resolveData.content = raw.data.content
+        resolveData.like = raw.data.like
+        resolveData.unlike = raw.data.unlike
+        resolveData.report = raw.data.report
+        resolveData.username = raw.data.user.username || raw.data.user.nickName
+        resolveData.avatarUrl = raw.data.user.avatarUrl
+        res.push(resolveData)
+      })
+      return res
+    }
+
     onLoad() {
       let that = this
       wx.getSetting({
@@ -404,6 +476,7 @@
               success: function(res) {
                 that.userInfo = res.userInfo
                 that.hasUserInfo = true
+                // that.login(res.userInfo)
                 that.$parent.globalData.userInfo = res.userInfo
                 that.$apply()
               }

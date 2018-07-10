@@ -15,6 +15,7 @@ view, text {
 <script>
 import wepy from 'wepy'
 import 'wepy-async-function'
+import AV from 'leancloud-storage'
 
 export default class extends wepy.app {
   config = {
@@ -60,6 +61,16 @@ export default class extends wepy.app {
   onLaunch() {
     // this.login()
     this.testAsync()
+    this.initAV()
+  }
+
+  initAV () {
+    var APP_ID = 'bSlHOP5YhRoylMzN0cjNfKN2-gzGzoHsz'
+    var APP_KEY = 'Kkhs2gTukXtYHLT2VLRJgkKq'
+    AV.init({
+      appId: APP_ID,
+      appKey: APP_KEY
+    })
   }
 
   async login() {

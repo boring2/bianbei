@@ -17,6 +17,16 @@ router.get('/than3', function(req, res, next) {
 	})
 })
 
+router.get('/today', function(req, res, next) {
+	var query = new AV.Query(Topic)
+	query.descending('createdAt')
+	query.first().then(function(results) {
+		res.send(results)
+	}).catch((e) => {
+		res.send(e)
+	})
+})
+
 // 查询 Topic 列表
 router.get('/', function(req, res, next) {
 	var query = new AV.Query(Topic)
