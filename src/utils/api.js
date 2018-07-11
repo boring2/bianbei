@@ -37,6 +37,20 @@ let api = {
     })
   },
 
+  /// data is {
+  ///  topicId, versionId, preIdeaId, content, isCheckout
+  /// }
+  postIdea (data, session) {
+    return wepy.request({
+      url: `${url.idea.url}`,
+      method: 'POST',
+      data: data,
+      header: {
+        'X-LC-Session': session
+      }
+    })
+  },
+
   liked () {
 
   },

@@ -205,26 +205,45 @@
   import AV from 'leancloud-storage'
   import api from '../utils/api'
 
-  let testData = [
-    [{id: '111', content: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahajdklasjdkjaskldjalsjdlkjslkdjsaldjlsajldjsklj', username: 'boring', avatarUrl: 'xxxx', like: 1, unlike: 1, report: 1},
-    {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'}],
-    [{id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'}],
-    [{id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-    {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'}]
-  ]
+  let testData = {
+    topic: {
+      id: '123',
+      content: 'aaaaa'
+    },
+    versions: [
+      {
+        id: 'version1'
+      },
+      {
+        id: 'version2'
+      },
+      {
+        id: 'version3'
+      }
+    ],
+    ideas: [
+      [{id: '111', content: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahajdklasjdkjaskldjalsjdlkjslkdjsaldjlsajldjsklj', username: 'boring', avatarUrl: 'xxxx', like: 1, unlike: 1, report: 1},
+      {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'}],
+
+      [{id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'}],
+
+      [{id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+      {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'}]
+    ]
+  }
   console.log('moduleA ignored: ', moduleA) // => moduleA ignored: {}
 
   export default class Index extends wepy.page {
@@ -243,15 +262,17 @@
     mixins = [testMixin]
 
     data = {
-      versionCount: testData.length,
-      todayTitle: 'Today Title',
+      result: testData,
+      versionCount: testData.versions.length,
+      todayTitle: testData.topic.content,
       userInfo: {
         nickName: '加载中...'
       },
       hasUserInfo: false,
       currentVersion: 0,
-      list: testData[0],
+      list: testData.ideas[0],
       isReplying: false,
+      st: null, // sessionToken
       inputValue: '',
       mynum: 20,
       normalTitle: '原始标题',
@@ -315,13 +336,12 @@
         }
         return result
       }
-
     }
 
     methods = {
       changeVersion (num, e) {
         this.currentVersion = num
-        this.list = testData[num]
+        this.list = testData.ideas[num]
       },
       handleFeedBtn (index, type) {
         if (!this.list[index][type]) {
@@ -344,6 +364,9 @@
       send () {
         this.isReplying = false
         console.log(this.inputValue)
+        api.postIdea({
+          topicId
+        }, this.st)
       },
       handleCheckout (e) {
 
@@ -408,16 +431,20 @@
     }
 
     async login (userInfo) {
-      let data = []
+      let data = {}
+      let ideas = []
 
       try {
         /// TODO. 这个影响了加载速度 先查找了topic然后查找了version，然后查找了idea
         let user = await AV.User.loginWithWeapp()
         await user.set(userInfo).save()
+        this.st = AV.User.current().getSessionToken()
         let topic = await api.getFirstTopic()
-        this.todayTitle = topic.data.content
+        /// 设置topic
+        data.topic = topic.data
+        /// 设置versions
         let versions = topic.data.versions
-        this.versionCount = versions.length
+        data.versions = topic.data.versions
         let versionsPs = []
         for (let i = 0; i < versions.length; i++) {
           let a = await api.getVersion(versions[i].objectId)
@@ -430,16 +457,18 @@
           }
           let ideas = versionsPs[i].data.ideas
           for (let j = 0; j < ideas.length; j++) {
-            let a = await api.getIdea(ideas[j].objectId, AV.User.current().getSessionToken())
+            let a = await api.getIdea(ideas[j].objectId, this.st)
             ps[i].push(a)
           }
         }
 
         for (let i in ps) {
-          data.push(this._resolveData(ps[i]))
-          testData = data
-          this.list = data[0]
+          ideas.push(this._resolveData(ps[i]))
         }
+        /// 设置ideas
+        data.ideas = ideas
+        testData = data
+        this.result = data
         this.$apply()
       } catch (e) {
         let promise = this.$invoke('toast', 'show', {
@@ -476,7 +505,7 @@
               success: function(res) {
                 that.userInfo = res.userInfo
                 that.hasUserInfo = true
-                // that.login(res.userInfo)
+                that.login(res.userInfo)
                 that.$parent.globalData.userInfo = res.userInfo
                 that.$apply()
               }
