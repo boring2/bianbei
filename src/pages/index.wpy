@@ -95,15 +95,15 @@
       <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
     </view>
     <view class="todayTitle">
-      {{todayTitle}}
+      {{result.topic.content}}
     </view>
-    <view wx:if="{{versionCount > 1}}" class="version-btns">
+    <view wx:if="{{versions.length > 1}}" class="version-btns">
       <repeat for="{{versions}}" key="index" index="index" item="versionNum">
         <button class="version-btn" @tap="changeVersion({{index}})">故事 {{versionNum}}</button>
       </repeat>
     </view>
     <view class="idea-view">
-      <repeat for="{{list}}" key="index" index="index" item="idea">
+      <repeat for="{{result.ideas[currentVersion]}}" key="index" index="index" item="idea">
         <view class="ideaInfo">
           <view class="ideaInfo-top">
             <image class="ideaInfo-avatar" src="{{ idea.avatarUrl }}" background-size="cover"/>
@@ -118,8 +118,8 @@
             <button @tap="handleFeedBtn({{index}}, 'like')">赞 {{ idea.like }}</button>
             <button @tap="handleFeedBtn({{index}}, 'unlike')">踩 {{ idea.unlike }}</button>
             <button @tap="handleFeedBtn({{index}}, 'report')">举报 {{ idea.report }}</button>
-            <button @tap="handleReply" class="{{index !== (list.length - 1) ? 'hide' : ''}}">回复</button>
-            <button @tap="handleCheckout" class="{{versionCount >= 3 ? 'hide' : ''}}">切分支</button>
+            <button @tap="handleReply({{idea.objectId}})" class="{{index !== (result.ideas[currentVersion].length - 1) ? 'hide' : ''}}">回复</button>
+            <button @tap="handleCheckout" class="{{versions.length >= 3 ? 'hide' : ''}}">切分支</button>
           </view>
         </view>
       </repeat>
@@ -207,41 +207,41 @@
 
   let testData = {
     topic: {
-      id: '123',
+      objectId: '123',
       content: 'aaaaa'
     },
     versions: [
       {
-        id: 'version1'
+        objectId: 'version1'
       },
       {
-        id: 'version2'
+        objectId: 'version2'
       },
       {
-        id: 'version3'
+        objectId: 'version3'
       }
     ],
     ideas: [
-      [{id: '111', content: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahajdklasjdkjaskldjalsjdlkjslkdjsaldjlsajldjsklj', username: 'boring', avatarUrl: 'xxxx', like: 1, unlike: 1, report: 1},
-      {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'}],
+      [{objectId: '111', content: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahajdklasjdkjaskldjalsjdlkjslkdjsaldjlsajldjsklj', username: 'boring', avatarUrl: 'xxxx', like: 1, unlike: 1, report: 1},
+      {objectId: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'}],
 
-      [{id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'}],
+      [{objectId: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'}],
 
-      [{id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-      {id: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'}]
+      [{objectId: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
+      {objectId: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'}]
     ]
   }
   console.log('moduleA ignored: ', moduleA) // => moduleA ignored: {}
@@ -263,14 +263,12 @@
 
     data = {
       result: testData,
-      versionCount: testData.versions.length,
-      todayTitle: testData.topic.content,
+      preIdeaId: '',
       userInfo: {
         nickName: '加载中...'
       },
       hasUserInfo: false,
       currentVersion: 0,
-      list: testData.ideas[0],
       isReplying: false,
       st: null, // sessionToken
       inputValue: '',
@@ -331,7 +329,7 @@
       },
       versions () {
         let result = []
-        for (let i = 0; i < this.versionCount; i++) {
+        for (let i = 0; i < this.result.versions.length; i++) {
           result.push(i + 1)
         }
         return result
@@ -341,17 +339,18 @@
     methods = {
       changeVersion (num, e) {
         this.currentVersion = num
-        this.list = testData.ideas[num]
       },
       handleFeedBtn (index, type) {
-        if (!this.list[index][type]) {
-          this.list[index][type] = 1
+        let list = this.result.ideas
+        if (!list[index][type]) {
+          list[index][type] = 1
         } else {
-          this.list[index][type] += 1
+          list[index][type] += 1
         }
       },
-      handleReply (e) {
+      handleReply (id, e) {
         this.isReplying = true
+        this.preIdeaId = id
         console.log(e)
       },
       finishEnter (e) {
@@ -365,8 +364,23 @@
         this.isReplying = false
         console.log(this.inputValue)
         api.postIdea({
-          topicId
-        }, this.st)
+          topicId: this.result.topic.objectId,
+          versionId: this.result.versions[this.currentVersion].objectId,
+          preIdeaId: this.preIdeaId,
+          content: this.inputValue
+        }, this.st).then((res) => {
+          if (res.data.code) {
+            console.log(res.data.msg)
+          } else {
+            console.log(res.data)
+            res.data.user.username = AV.User.current().get('username')
+            res.data.user.avatarUrl = this.userInfo.avatarUrl
+            this.result.ideas[this.currentVersion].push(this._resolveData(res))
+            this.$apply()
+          }
+        }).catch((e) => {
+          console.log('add error', e)
+        })
       },
       handleCheckout (e) {
 
@@ -482,18 +496,26 @@
 
     _resolveData (rawData) {
       let res = []
-      rawData.forEach((raw) => {
+      function fn (raw) {
         let resolveData = {}
-        resolveData.id = raw.data.objectId
+        resolveData.objectId = raw.data.objectId
         resolveData.content = raw.data.content
         resolveData.like = raw.data.like
         resolveData.unlike = raw.data.unlike
         resolveData.report = raw.data.report
         resolveData.username = raw.data.user.username || raw.data.user.nickName
         resolveData.avatarUrl = raw.data.user.avatarUrl
-        res.push(resolveData)
-      })
-      return res
+        return resolveData
+      }
+      if (Array.isArray(rawData)) {
+        rawData.forEach((raw) => {
+          let resolveData = fn(raw)
+          res.push(resolveData)
+        })
+        return res
+      } else {
+        return fn(rawData)
+      }
     }
 
     onLoad() {
