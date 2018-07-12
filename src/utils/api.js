@@ -16,7 +16,6 @@ let url = {
 
 let api = {
   getFirstTopic () {
-    console.log('aaaaaaaaaaaa')
     return wepy.request(url.firstTopic.url)
   },
 

@@ -95,7 +95,7 @@
       <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
     </view>
     <view class="todayTitle">
-      {{result.topic.content}}
+      {{topic.content}}
     </view>
     <view wx:if="{{versions.length > 1}}" class="version-btns">
       <repeat for="{{versions}}" key="index" index="index" item="versionNum">
@@ -103,7 +103,7 @@
       </repeat>
     </view>
     <view class="idea-view">
-      <repeat for="{{result.ideas[currentVersion]}}" key="index" index="index" item="idea">
+      <repeat for="{{ideas}}" key="index" index="index" item="idea">
         <view class="ideaInfo">
           <view class="ideaInfo-top">
             <image class="ideaInfo-avatar" src="{{ idea.avatarUrl }}" background-size="cover"/>
@@ -118,8 +118,8 @@
             <button @tap="handleFeedBtn({{index}}, 'like')">赞 {{ idea.like }}</button>
             <button @tap="handleFeedBtn({{index}}, 'unlike')">踩 {{ idea.unlike }}</button>
             <button @tap="handleFeedBtn({{index}}, 'report')">举报 {{ idea.report }}</button>
-            <button @tap="handleReply({{idea.objectId}})" class="{{index !== (result.ideas[currentVersion].length - 1) ? 'hide' : ''}}">回复</button>
-            <button @tap="handleCheckout" class="{{versions.length >= 3 ? 'hide' : ''}}">切分支</button>
+            <button @tap="handleReply({{idea.objectId}}, false)" class="{{index !== (ideas.length - 1) ? 'hide' : ''}}">回复</button>
+            <button @tap="handleReply({{idea.objectId}}, true)" class="{{(versions.length >= 3 || index === (ideas.length - 1)) ? 'hide' : ''}}">切分支</button>
           </view>
         </view>
       </repeat>
@@ -128,68 +128,10 @@
       <input placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput"/>
       <button @tap="send">发送</button>
     </view>
-
-    <view class="container">
+    <!-- <view class="container">
       <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
-
-      <!-- <view class="userinfo" @tap="handleViewTap">
-        <image class="userinfo-avatar" src="{{ userInfo.avatarUrl }}" background-size="cover"/>
-        <view class="userinfo-nickname">{{ userInfo.nickName }}</view>
-      </view> -->
-
-      <panel>
-        <view class="title" slot="title">aa</view>
-
-        <text class="info">{{normalTitle}}</text>
-        <text class="info">{{setTimeoutTitle}}</text>
-        <text class="info">{{mixin}}</text>
-        <text class="info">{{mynum}}</text>
-        <text class="info">{{now}}</text>
-        <button @tap="plus('a')" size="mini">  +  </button>
-      </panel>
-
-      <panel>
-        <view class="title" slot="title">其它测试</view>
-        <button @tap="toast" size="mini">第三方组件</button>
-        <button @tap="communicate" size="mini">组件通信</button>
-        <button @tap="tap" size="mini">混合TAP事件</button>
-      </panel>
-
-      <panel>
-        <view class="title" slot="title">测试并发网络请求</view>
-        <view>返回结果: <text>{{netrst}}</text></view>
-        <button @tap="request" size="mini"> 点我发起10个请求 </button>
-      </panel>
-
-      <panel>
-        <view class="title" slot="title">测试组件</view>
-
-        <text class="testcounter">计数组件1: </text>
-        <view class="counterview">
-          <counter1 @index-emit.user="counterEmit" />
-        </view>
-
-        <text class="testcounter">计数组件2: </text>
-
-        <view class="counterview">
-          <counter2 :num.sync="mynum"></counter2>
-        </view>
-      </panel>
-
-      <panel>
-        <view class="title" slot="title">测试组件Repeat</view>
-        <repeat for="{{groupList}}" index="index" item="item" key="key">
-          <group :grouplist="item" :indexa="index"></group>
-        </repeat>
-      </panel>
-
-      <panel>
-        <view class="title" slot="title">测试列表</view>
-        <list></list>
-      </panel>
-
-      <toast />
-    </view>
+    </view> -->
+    <toast />
   </scroll-view>
 </template>
 
@@ -263,6 +205,9 @@
 
     data = {
       result: testData,
+      ideas: testData.ideas[0],
+      topic: testData.topic,
+      versions: testData.versions,
       preIdeaId: '',
       userInfo: {
         nickName: '加载中...'
@@ -272,55 +217,7 @@
       isReplying: false,
       st: null, // sessionToken
       inputValue: '',
-      mynum: 20,
-      normalTitle: '原始标题',
-      setTimeoutTitle: '标题三秒后会被修改',
-      count: 0,
-      netrst: '',
-      groupList: [
-        {
-          id: 1,
-          name: '点击改变',
-          list: [
-            {
-              childid: '1.1',
-              childname: '子项，点我改变'
-            }, {
-              childid: '1.2',
-              childname: '子项，点我改变'
-            }, {
-              childid: '1.3',
-              childname: '子项，点我改变'
-            }
-          ]
-        },
-        {
-          id: 2,
-          name: '点击改变',
-          list: [
-            {
-              childid: '2.1',
-              childname: '子项，点我改变'
-            }, {
-              childid: '2.2',
-              childname: '子项，点我改变'
-            }, {
-              childid: '2.3',
-              childname: '子项，点我改变'
-            }
-          ]
-        },
-        {
-          id: 3,
-          name: '点击改变',
-          list: [
-            {
-              childid: '3.1',
-              childname: '子项，点我改变'
-            }
-          ]
-        }
-      ]
+      isCheckout: false
     }
 
     computed = {
@@ -329,7 +226,7 @@
       },
       versions () {
         let result = []
-        for (let i = 0; i < this.result.versions.length; i++) {
+        for (let i = 0; i < this.versions.length; i++) {
           result.push(i + 1)
         }
         return result
@@ -341,17 +238,18 @@
         this.currentVersion = num
       },
       handleFeedBtn (index, type) {
-        let list = this.result.ideas
+        let list = this.ideas
         if (!list[index][type]) {
           list[index][type] = 1
         } else {
           list[index][type] += 1
         }
       },
-      handleReply (id, e) {
+      handleReply (id, isCheckout, e) {
         this.isReplying = true
         this.preIdeaId = id
-        console.log(e)
+        this.isCheckout = isCheckout
+        console.log(isCheckout)
       },
       finishEnter (e) {
         // this.isReplying = false
@@ -364,10 +262,11 @@
         this.isReplying = false
         console.log(this.inputValue)
         api.postIdea({
-          topicId: this.result.topic.objectId,
-          versionId: this.result.versions[this.currentVersion].objectId,
+          topicId: this.topic.objectId,
+          versionId: this.versions[this.currentVersion].objectId,
           preIdeaId: this.preIdeaId,
-          content: this.inputValue
+          content: this.inputValue,
+          isCheckout: this.isCheckout
         }, this.st).then((res) => {
           if (res.data.code) {
             console.log(res.data.msg)
@@ -375,15 +274,12 @@
             console.log(res.data)
             res.data.user.username = AV.User.current().get('username')
             res.data.user.avatarUrl = this.userInfo.avatarUrl
-            this.result.ideas[this.currentVersion].push(this._resolveData(res))
+            this.ideas.push(this._resolveData(res))
             this.$apply()
           }
         }).catch((e) => {
           console.log('add error', e)
         })
-      },
-      handleCheckout (e) {
-
       },
       plus () {
         this.mynum++
@@ -406,6 +302,7 @@
         this.userInfo = e.detail.userInfo
         this.hasUserInfo = true
         this.$parent.globalData.userInfo = e.detail.userInfo
+        console.log(e.detail.userInfo)
         // this.login(this.userInfo)
       },
 
@@ -442,6 +339,13 @@
         let $event = args[args.length - 1]
         console.log(`${this.$name} receive ${$event.name} from ${$event.source.$name}`)
       }
+    }
+
+    syncData (data) {
+      this.topic = data.topic
+      this.versions = data.versions
+      this.ideas = data.ideas[this.currentVersion] || []
+      this.$apply()
     }
 
     async login (userInfo) {
@@ -481,9 +385,7 @@
         }
         /// 设置ideas
         data.ideas = ideas
-        testData = data
-        this.result = data
-        this.$apply()
+        this.syncData(data)
       } catch (e) {
         let promise = this.$invoke('toast', 'show', {
           title: '发生错误，\n请在公众号留言'
