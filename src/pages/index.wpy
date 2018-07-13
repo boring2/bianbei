@@ -99,15 +99,15 @@
     </view>
     <view wx:if="{{versions.length > 1}}" class="version-btns">
       <repeat for="{{versions}}" key="index" index="index" item="versionNum">
-        <button class="version-btn" @tap="changeVersion({{index}})">故事 {{versionNum}}</button>
+        <button class="version-btn" @tap="changeVersion({{index}})">故事 {{index + 1}}</button>
       </repeat>
     </view>
     <view class="idea-view">
       <repeat for="{{ideas}}" key="index" index="index" item="idea">
         <view class="ideaInfo">
           <view class="ideaInfo-top">
-            <image class="ideaInfo-avatar" src="{{ idea.avatarUrl }}" background-size="cover"/>
-            <view class="ideaInfo-nickname">{{ idea.username }}</view>
+            <image class="ideaInfo-avatar" src="{{ idea.user.avatarUrl }}" background-size="cover"/>
+            <view class="ideaInfo-nickname">{{ idea.user.username }}</view>
           </view>
 
           <view class="ideaInfo-bottom">
@@ -118,14 +118,15 @@
             <button @tap="handleFeedBtn({{index}}, 'like')">赞 {{ idea.like }}</button>
             <button @tap="handleFeedBtn({{index}}, 'unlike')">踩 {{ idea.unlike }}</button>
             <button @tap="handleFeedBtn({{index}}, 'report')">举报 {{ idea.report }}</button>
-            <button @tap="handleReply({{idea.objectId}}, false)" class="{{index !== (ideas.length - 1) ? 'hide' : ''}}">回复</button>
-            <button @tap="handleReply({{idea.objectId}}, true)" class="{{(versions.length >= 3 || index === (ideas.length - 1)) ? 'hide' : ''}}">切分支</button>
+            <button @tap="handleReply({{idea.objectId}}, 0, {{index}})" class="{{index !== (ideas.length - 1) ? 'hide' : ''}}">回复</button>
+            <button @tap="handleReply({{idea.objectId}}, 1, {{index}})" class="{{(ideas.length === 1 && versions.length < 3) ? '' : 'hide'}}">新故事</button>
+            <button @tap="handleReply({{idea.objectId}}, 1, {{index}})" class="{{(versions.length >= 3 || index === (ideas.length - 1)) ? 'hide' : ''}}">切分支</button>
           </view>
         </view>
       </repeat>
     </view>
-    <view class="reply {{isReplying ? '' : 'hide'}}}">
-      <input placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput"/>
+    <view class="reply {{isReplying || (ideas.length === 0) ? '' : 'hide'}}}">
+      <input placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}"/>
       <button @tap="send">发送</button>
     </view>
     <!-- <view class="container">
@@ -217,25 +218,20 @@
       isReplying: false,
       st: null, // sessionToken
       inputValue: '',
-      isCheckout: false
+      isCheckout: false,
+      sliceIndex: testData.ideas[0].length
     }
 
     computed = {
       now () {
         return +new Date()
-      },
-      versions () {
-        let result = []
-        for (let i = 0; i < this.versions.length; i++) {
-          result.push(i + 1)
-        }
-        return result
       }
     }
 
     methods = {
       changeVersion (num, e) {
         this.currentVersion = num
+        this.ideas = testData.ideas[num] || []
       },
       handleFeedBtn (index, type) {
         let list = this.ideas
@@ -245,10 +241,11 @@
           list[index][type] += 1
         }
       },
-      handleReply (id, isCheckout, e) {
+      handleReply (id, isCheckout, sliceIndex, e) {
         this.isReplying = true
         this.preIdeaId = id
-        this.isCheckout = isCheckout
+        this.isCheckout = parseInt(isCheckout) === 1
+        this.sliceIndex = sliceIndex
         console.log(isCheckout)
       },
       finishEnter (e) {
@@ -260,22 +257,47 @@
       },
       send () {
         this.isReplying = false
-        console.log(this.inputValue)
-        api.postIdea({
+        let inputValue = this.inputValue
+        this.inputValue = ''
+
+        if (!inputValue.trim()) {
+          console.log('input value is empty')
+          this._showToast('输入不能为空')
+          return
+        }
+
+        let sendData = {
           topicId: this.topic.objectId,
-          versionId: this.versions[this.currentVersion].objectId,
-          preIdeaId: this.preIdeaId,
-          content: this.inputValue,
+          content: inputValue,
           isCheckout: this.isCheckout
-        }, this.st).then((res) => {
+        }
+        if (this.ideas.length > 1 || this.versions.length >= 3) {
+          sendData = Object.assign(sendData, {
+            versionId: this.versions[this.currentVersion].objectId,
+            preIdeaId: this.preIdeaId
+          })
+        }
+
+        api.postIdea(sendData, this.st).then((res) => {
           if (res.data.code) {
             console.log(res.data.msg)
+            this._showToast(res.data.msg)
           } else {
             console.log(res.data)
-            res.data.user.username = AV.User.current().get('username')
-            res.data.user.avatarUrl = this.userInfo.avatarUrl
-            this.ideas.push(this._resolveData(res))
-            this.$apply()
+            let idea = res.data.idea
+            let version = res.data.version
+            res.data.user = {}
+            idea.user.username = AV.User.current().get('username')
+            idea.user.avatarUrl = this.userInfo.avatarUrl
+            if (this.isCheckout || this.ideas.length === 0) {
+              console.log('push version')
+              testData.versions.push(version)
+              this.currentVersion = testData.versions.length - 1
+              let sliceIdea = this.ideas.slice(0, this.sliceIndex)
+              testData.ideas[this.currentVersion] = sliceIdea
+            }
+            testData.ideas[this.currentVersion].push(idea)
+            this.syncData(testData)
           }
         }).catch((e) => {
           console.log('add error', e)
@@ -342,6 +364,7 @@
     }
 
     syncData (data) {
+      testData = data
       this.topic = data.topic
       this.versions = data.versions
       this.ideas = data.ideas[this.currentVersion] || []
@@ -381,44 +404,53 @@
         }
 
         for (let i in ps) {
-          ideas.push(this._resolveData(ps[i]))
+          ideas.push(this._resolveIdeas(ps[i]))
         }
         /// 设置ideas
         data.ideas = ideas
+        console.log(data)
         this.syncData(data)
       } catch (e) {
-        let promise = this.$invoke('toast', 'show', {
-          title: '发生错误，\n请在公众号留言'
-        })
-        promise.then((d) => {
-          console.log('toast done')
-        })
+        this._showToast('发生错误，\n请在公众号留言')
       }
     }
 
-    _resolveData (rawData) {
-      let res = []
-      function fn (raw) {
-        let resolveData = {}
-        resolveData.objectId = raw.data.objectId
-        resolveData.content = raw.data.content
-        resolveData.like = raw.data.like
-        resolveData.unlike = raw.data.unlike
-        resolveData.report = raw.data.report
-        resolveData.username = raw.data.user.username || raw.data.user.nickName
-        resolveData.avatarUrl = raw.data.user.avatarUrl
-        return resolveData
-      }
-      if (Array.isArray(rawData)) {
-        rawData.forEach((raw) => {
-          let resolveData = fn(raw)
-          res.push(resolveData)
-        })
-        return res
-      } else {
-        return fn(rawData)
-      }
+    _showToast (title) {
+      this.$invoke('toast', 'show', {
+        title: title
+      })
     }
+
+    _resolveIdeas (ideas) {
+      let result = []
+      ideas.forEach((idea) => {
+        result.push(idea.data)
+      })
+      return result
+    }
+    // _resolveData (rawData) {
+    //   let res = []
+    //   function fn (raw) {
+    //     let resolveData = {}
+    //     resolveData.objectId = raw.data.objectId
+    //     resolveData.content = raw.data.content
+    //     resolveData.like = raw.data.like
+    //     resolveData.unlike = raw.data.unlike
+    //     resolveData.report = raw.data.report
+    //     resolveData.username = raw.data.user.username || raw.data.user.nickName
+    //     resolveData.avatarUrl = raw.data.user.avatarUrl
+    //     return resolveData
+    //   }
+    //   if (Array.isArray(rawData)) {
+    //     rawData.forEach((raw) => {
+    //       let resolveData = fn(raw)
+    //       res.push(resolveData)
+    //     })
+    //     return res
+    //   } else {
+    //     return fn(rawData)
+    //   }
+    // }
 
     onLoad() {
       let that = this

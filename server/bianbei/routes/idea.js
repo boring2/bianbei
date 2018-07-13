@@ -54,7 +54,7 @@ router.post('/', function (req, res, next) {
   let topicPromise = topicQuery.get(topicId, {
     sessionToken: sessionToken
   })
-  console.log('------------')
+
   let versionQuery = new AV.Query(DM.Version)
 
   /// 如果没有verionId那应该也没有preIdeaId，判断topic versions length是否小于等于3，是的话追加一个新的version到topic上.
@@ -66,15 +66,19 @@ router.post('/', function (req, res, next) {
         topic.addUnique('versions', version)
         return topic.save(null, {
           sessionToken
-        })
+        }).then(() => {
+					res.send({
+						idea, version
+					})
+				})
       } else {
-        throw '该主题已经有三个故事线了。'
+        throw new Error('该主题已经有三个故事线了。')
       }
-    }).then((topic) => {
-      res.send(topic)
     }).catch((e) => {
-      console.log('----------', e)
-      res.send(e)
+      res.send({
+        code: 405,
+        msg: e.message
+      })
     })
   } else {
     /// 有的话 判断是否checkout，不checkout, 追加在version的idea中
@@ -96,7 +100,7 @@ router.post('/', function (req, res, next) {
         if (idea.get('user').id === user.id) {
           userIdeas.push(idea)
         }
-      })
+			})
       if (userIdeas.length > limitLength - 1) {
         throw new Error('这个版本你已经贡献了5个想法了，请换一个版本试试。')
       } else {
@@ -115,16 +119,18 @@ router.post('/', function (req, res, next) {
                   sessionToken
                 })
               }).then(() => {
-                res.send(idea)
+                res.send({idea})
                 // res.send('感谢你贡献想法。')
               })
               /// 如果上一个idea有nextIdea字段， 则提示用户手慢了。
             } else {
-              throw '该版本已经被人捷足先登。你可以创建新的故事线。'
+              throw new Error('该版本已经被人捷足先登。你可以创建新的故事线。')
             }
           }).catch((e) => {
-            console.log('-------- create idea error no checkout', e)
-            res.send(e)
+            res.send({
+							code: 405,
+							msg: e.message
+						})
           })
         } else {
           /// 如果有带checkout参数。
@@ -146,29 +152,57 @@ router.post('/', function (req, res, next) {
                     useMasterKey: true
                   })
                 }).then(() => {
+									res.send({
+										idea,
+										version
+									})
                   res.send('成功创建新的故事线。')
                 })
               } else {
-                throw 'Topic has three versions.'
+                throw new Error('该主题已经有三个版本了，不能再创建新的故事线了。')
               }
               /// 如果上一个idea有nextIdea字段并且大于3， 则提示用户版本满了。
             } else {
-              throw '该主题已经有三个版本了，不能再创建新的故事线了。'
+              throw new Error('该主题已经有三个版本了，不能再创建新的故事线了。')
             }
           }).catch((e) => {
-            console.log('999999999', e)
-            res.send(e)
+            res.send({
+							code: 405,
+							msg: e.message
+						})
           })
         }
       }
     }).catch((e) => {
-      console.log('add idea error', e)
       res.send({
         code: 405,
         msg: e.message
       })
     })
   }
+})
+
+
+router.post('/user', (req, res, next) => {
+	let versionId = req.body.versionId
+	let sessionToken = req.headers['x-lc-session']
+	let userPromise = AV.User.become(sessionToken)
+	let versionQuery = new AV.Query(DM.Version)
+	versionQuery.include('topic')
+  versionQuery.include('ideas')
+  let versionPromise = versionQuery.get(versionId, {
+    sessionToken
+  })
+	AV.Promise.all([userPromise, versionPromise]).then(([user, version]) => {
+		let userIdeas = []
+		let ideas = version.get('ideas')
+		ideas.forEach((idea) => {
+			if (idea.get('user').id === user.id) {
+				userIdeas.push(idea)
+			}
+		})
+		res.send(userIdeas)
+	}).catch(next)
 })
 
 router.post('/checkout', (req, res, next) => {
