@@ -67,10 +67,10 @@ router.post('/', function (req, res, next) {
         return topic.save(null, {
           sessionToken
         }).then(() => {
-					res.send({
-						idea, version
-					})
-				})
+          res.send({
+            idea, version
+          })
+        })
       } else {
         throw new Error('该主题已经有三个故事线了。')
       }
@@ -100,7 +100,7 @@ router.post('/', function (req, res, next) {
         if (idea.get('user').id === user.id) {
           userIdeas.push(idea)
         }
-			})
+      })
       if (userIdeas.length > limitLength - 1) {
         throw new Error('这个版本你已经贡献了5个想法了，请换一个版本试试。')
       } else {
@@ -128,9 +128,9 @@ router.post('/', function (req, res, next) {
             }
           }).catch((e) => {
             res.send({
-							code: 405,
-							msg: e.message
-						})
+              code: 405,
+              msg: e.message
+            })
           })
         } else {
           /// 如果有带checkout参数。
@@ -152,10 +152,10 @@ router.post('/', function (req, res, next) {
                     useMasterKey: true
                   })
                 }).then(() => {
-									res.send({
-										idea,
-										version
-									})
+                  res.send({
+                    idea,
+                    version
+                  })
                   res.send('成功创建新的故事线。')
                 })
               } else {
@@ -167,9 +167,9 @@ router.post('/', function (req, res, next) {
             }
           }).catch((e) => {
             res.send({
-							code: 405,
-							msg: e.message
-						})
+              code: 405,
+              msg: e.message
+            })
           })
         }
       }
@@ -182,27 +182,26 @@ router.post('/', function (req, res, next) {
   }
 })
 
-
 router.post('/user', (req, res, next) => {
-	let versionId = req.body.versionId
-	let sessionToken = req.headers['x-lc-session']
-	let userPromise = AV.User.become(sessionToken)
-	let versionQuery = new AV.Query(DM.Version)
-	versionQuery.include('topic')
+  let versionId = req.body.versionId
+  let sessionToken = req.headers['x-lc-session']
+  let userPromise = AV.User.become(sessionToken)
+  let versionQuery = new AV.Query(DM.Version)
+  versionQuery.include('topic')
   versionQuery.include('ideas')
   let versionPromise = versionQuery.get(versionId, {
     sessionToken
   })
-	AV.Promise.all([userPromise, versionPromise]).then(([user, version]) => {
-		let userIdeas = []
-		let ideas = version.get('ideas')
-		ideas.forEach((idea) => {
-			if (idea.get('user').id === user.id) {
-				userIdeas.push(idea)
-			}
-		})
-		res.send(userIdeas)
-	}).catch(next)
+  AV.Promise.all([userPromise, versionPromise]).then(([user, version]) => {
+    let userIdeas = []
+    let ideas = version.get('ideas')
+    ideas.forEach((idea) => {
+      if (idea.get('user').id === user.id) {
+        userIdeas.push(idea)
+      }
+    })
+    res.send(userIdeas)
+  }).catch(next)
 })
 
 router.post('/checkout', (req, res, next) => {
@@ -221,6 +220,11 @@ router.post('/report', likeHander('report'))
  * @param {String} type "like", "unlike", "report"
  */
 function likeHander(type) {
+  let messageMap = {
+    like: '你已经赞过该想法了。',
+    unlike: '你已经踩过该想法了。',
+    report: '你已经举报过了。谢谢。'
+  }
   let userType = type + 's'
   return function (req, res, next) {
     let id = req.query.id
@@ -229,7 +233,7 @@ function likeHander(type) {
     }
     let userPromise = AV.User.become(req.headers['x-lc-session'])
     let ideaQuery = new AV.Query(DM.Idea)
-    var ideaPromise = ideaQuery.get(id)
+    var ideaPromise = ideaQuery.get(id, {sessionToken: req.headers['x-lc-session']})
     Promise.all([userPromise, ideaPromise]).then((result) => {
       let user = result[0]
       let idea = result[1]
@@ -238,16 +242,19 @@ function likeHander(type) {
         return likeIdea.id === idea.id
       })
       if (likes.length) {
-        throw new Error(`You have ${type} the idea.`)
+        throw new Error(messageMap[type])
       }
       user.addUnique(userType, idea)
       idea.increment(type, 1)
       idea.fetchWhenSave = true
-      return user.save()
+      return user.save(null, {sessionToken: req.headers['x-lc-session']})
     }).then((result) => {
       res.send('success')
     }).catch((e) => {
-      res.send(e.message)
+      res.send({
+        code: 405,
+        msg: e.message
+      })
     })
   }
 }

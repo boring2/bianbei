@@ -115,9 +115,9 @@
           </view>
 
           <view class="ideaInfo-feedback">
-            <button @tap="handleFeedBtn({{index}}, 'like')">赞 {{ idea.like }}</button>
-            <button @tap="handleFeedBtn({{index}}, 'unlike')">踩 {{ idea.unlike }}</button>
-            <button @tap="handleFeedBtn({{index}}, 'report')">举报 {{ idea.report }}</button>
+            <button @tap="handleFeedBtn({{idea.objectId}}, 'like', {{index}})">赞 {{ idea.like }}</button>
+            <button @tap="handleFeedBtn({{idea.objectId}}, 'unlike', {{index}})">踩 {{ idea.unlike }}</button>
+            <button @tap="handleFeedBtn({{idea.objectId}}, 'report', {{index}})">举报 {{ idea.report }}</button>
             <button @tap="handleReply({{idea.objectId}}, 0, {{index}})" class="{{index !== (ideas.length - 1) ? 'hide' : ''}}">回复</button>
             <button @tap="handleReply({{idea.objectId}}, 1, {{index}})" class="{{(ideas.length === 1 && versions.length < 3) ? '' : 'hide'}}">新故事</button>
             <button @tap="handleReply({{idea.objectId}}, 1, {{index}})" class="{{(versions.length >= 3 || index === (ideas.length - 1)) ? 'hide' : ''}}">切分支</button>
@@ -233,13 +233,20 @@
         this.currentVersion = num
         this.ideas = testData.ideas[num] || []
       },
-      handleFeedBtn (index, type) {
-        let list = this.ideas
-        if (!list[index][type]) {
-          list[index][type] = 1
-        } else {
-          list[index][type] += 1
-        }
+      handleFeedBtn (id, type, index) {
+        api.handleFeed(id, type, this.st).then((res) => {
+          if (res.data.code) {
+            this._showToast(res.data.msg)
+          } else {
+            let list = this.ideas
+            if (!list[index][type]) {
+              list[index][type] = 1
+            } else {
+              list[index][type] += 1
+            }
+            this.$apply()
+          }
+        })
       },
       handleReply (id, isCheckout, sliceIndex, e) {
         this.isReplying = true
