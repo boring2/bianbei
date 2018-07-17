@@ -468,7 +468,7 @@
               success: function(res) {
                 that.userInfo = res.userInfo
                 that.hasUserInfo = true
-                that.login(res.userInfo)
+                // that.login(res.userInfo)
                 that.$parent.globalData.userInfo = res.userInfo
                 that.$apply()
               }
