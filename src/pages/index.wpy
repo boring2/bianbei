@@ -147,6 +147,7 @@
   import testMixin from '../mixins/test'
   import AV from 'leancloud-storage'
   import api from '../utils/api'
+  import LocalStorage from '../utils/localstore'
 
   let testData = {
     topic: {
