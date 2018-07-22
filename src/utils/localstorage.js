@@ -1,12 +1,10 @@
-import { version } from "punycode";
-
 /**
  * 一个完整的topic
  * Topic {
  *  id, content, versions<Array>, ideas<Array>
  * }
  */
-let LocalStore = {
+let LocalStorage = {
   fetchTopic (topicId, success, error) {
     return this.getTopic(topicId, success, error)
   },
@@ -17,7 +15,7 @@ let LocalStore = {
       success && success()
       return topic
     } catch (e) {
-      console.error(getTopic, e)
+      console.error('getTopic error', e)
       error && error()
     }
   },
@@ -27,7 +25,7 @@ let LocalStore = {
       wx.setStorageSync(topicId, data)
       success && success()
     } catch (e) {
-      console.error(e)
+      console.error('save topic error', e)
       error && error()
     }
   },
@@ -59,4 +57,4 @@ let LocalStore = {
   }
 }
 
-export default LocalStore
+export default LocalStorage

@@ -118,9 +118,9 @@
             <button @tap="handleFeedBtn({{idea.objectId}}, 'like', {{index}})">赞 {{ idea.like }}</button>
             <button @tap="handleFeedBtn({{idea.objectId}}, 'unlike', {{index}})">踩 {{ idea.unlike }}</button>
             <button @tap="handleFeedBtn({{idea.objectId}}, 'report', {{index}})">举报 {{ idea.report }}</button>
-            <button @tap="handleReply({{idea.objectId}}, 0, {{index}})" class="{{index !== (ideas.length - 1) ? 'hide' : ''}}">回复</button>
-            <button @tap="handleReply({{idea.objectId}}, 1, {{index}})" class="{{(ideas.length === 1 && versions.length < 3) ? '' : 'hide'}}">新故事</button>
-            <button @tap="handleReply({{idea.objectId}}, 1, {{index}})" class="{{(versions.length >= 3 || index === (ideas.length - 1)) ? 'hide' : ''}}">切分支</button>
+            <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 0)" class="{{index !== (ideas.length - 1) ? 'hide' : ''}}">回复</button>
+            <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 1)" class="{{(index === 0 && versions.length < 3) ? '' : 'hide'}}">新故事</button>
+            <button @tap="handleReply({{idea.objectId}}, 1, {{index}}), 0" class="{{(versions.length >= 3 || index === (ideas.length - 1)) ? 'hide' : ''}}">切分支</button>
           </view>
         </view>
       </repeat>
@@ -141,58 +141,24 @@
   import Panel from '@/components/panel' // alias example
   import Counter from 'counter' // alias example
   import List from '../components/list' // aliasFields example
-  import moduleA from 'module-a' // aliasFields ignore module example
   import Group from '../components/group'
   import Toast from 'wepy-com-toast'
   import testMixin from '../mixins/test'
   import AV from 'leancloud-storage'
   import api from '../utils/api'
-  import LocalStorage from '../utils/localstore'
+  // import LocalStorage from '../utils/localstorage'
 
-  let testData = {
-    topic: {
-      objectId: '123',
-      content: 'aaaaa'
-    },
-    versions: [
-      {
-        objectId: 'version1'
-      },
-      {
-        objectId: 'version2'
-      },
-      {
-        objectId: 'version3'
-      }
-    ],
-    ideas: [
-      [{objectId: '111', content: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahajdklasjdkjaskldjalsjdlkjslkdjsaldjlsajldjsklj', username: 'boring', avatarUrl: 'xxxx', like: 1, unlike: 1, report: 1},
-      {objectId: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'aaaa', username: 'boring', avatarUrl: 'xxxx'}],
-
-      [{objectId: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'bbbbbb', username: 'boring', avatarUrl: 'xxxx'}],
-
-      [{objectId: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'},
-      {objectId: '111', content: 'cccc', username: 'boring', avatarUrl: 'xxxx'}]
-    ]
+  let todayData = {
+    topic: {},
+    versions: [],
+    ideas: []
   }
-  console.log('moduleA ignored: ', moduleA) // => moduleA ignored: {}
 
   export default class Index extends wepy.page {
     config = {
-      navigationBarTitleText: '编呗今日'
+      navigationBarTitleText: '编呗今日',
+      onReachBottomDistance: 50,
+      enablePullDownRefresh: true
     }
     components = {
       panel: Panel,
@@ -206,10 +172,10 @@
     mixins = [testMixin]
 
     data = {
-      result: testData,
-      ideas: testData.ideas[0],
-      topic: testData.topic,
-      versions: testData.versions,
+      result: todayData,
+      ideas: todayData.ideas[0] || [],
+      topic: todayData.topic,
+      versions: todayData.versions,
       preIdeaId: '',
       userInfo: {
         nickName: '加载中...'
@@ -220,7 +186,8 @@
       st: null, // sessionToken
       inputValue: '',
       isCheckout: false,
-      sliceIndex: testData.ideas[0].length
+      isNew: false, // 全新版本，只有在第一个idea才会有
+      sliceIndex: 0
     }
 
     computed = {
@@ -232,7 +199,17 @@
     methods = {
       changeVersion (num, e) {
         this.currentVersion = num
-        this.ideas = testData.ideas[num] || []
+        let currentVersionIdeas = todayData.ideas[num]
+        if (currentVersionIdeas) {
+          this.ideas = currentVersionIdeas
+        } else {
+          this.getCurrentVersionIdeas().then((ideas) => {
+            console.log(ideas)
+            todayData.ideas[num] = ideas
+            this.ideas = ideas
+            this.$apply()
+          })
+        }
       },
       handleFeedBtn (id, type, index) {
         api.handleFeed(id, type, this.st).then((res) => {
@@ -249,11 +226,12 @@
           }
         })
       },
-      handleReply (id, isCheckout, sliceIndex, e) {
+      handleReply (id, isCheckout, sliceIndex, isNew, e) {
         this.isReplying = true
         this.preIdeaId = id
         this.isCheckout = parseInt(isCheckout) === 1
         this.sliceIndex = sliceIndex
+        this.isNew = parseInt(isNew) === 1
         console.log(isCheckout)
       },
       finishEnter (e) {
@@ -266,6 +244,8 @@
       send () {
         this.isReplying = false
         let inputValue = this.inputValue
+        const isCheckout = this.isCheckout
+        const isNew = this.isNew || this.ideas.length === 0
         this.inputValue = ''
 
         if (!inputValue.trim()) {
@@ -277,9 +257,12 @@
         let sendData = {
           topicId: this.topic.objectId,
           content: inputValue,
-          isCheckout: this.isCheckout
+          isCheckout: isCheckout
         }
-        if (this.ideas.length > 1 || this.versions.length >= 3) {
+
+        /// 如果是checkout并且只有一条idea，就不需要下面数据
+        /// (this.isCheckout && this.sliceIndex === 0) 的相反是 (!this.isCheckout || this.sliceIndex !== 0)
+        if (!isNew) {
           sendData = Object.assign(sendData, {
             versionId: this.versions[this.currentVersion].objectId,
             preIdeaId: this.preIdeaId
@@ -297,15 +280,18 @@
             res.data.user = {}
             idea.user.username = AV.User.current().get('username')
             idea.user.avatarUrl = this.userInfo.avatarUrl
-            if (this.isCheckout || this.ideas.length === 0) {
-              console.log('push version')
-              testData.versions.push(version)
-              this.currentVersion = testData.versions.length - 1
-              let sliceIdea = this.ideas.slice(0, this.sliceIndex)
-              testData.ideas[this.currentVersion] = sliceIdea
+            if (isNew || isCheckout) {
+              todayData.versions.push(version)
+              this.currentVersion = todayData.versions.length - 1
+              if (isNew) {
+                todayData.ideas[this.currentVersion] = []
+              } else {
+                let sliceIdea = this.ideas.slice(0, this.sliceIndex + 1)
+                todayData.ideas[this.currentVersion] = sliceIdea
+              }
             }
-            testData.ideas[this.currentVersion].push(idea)
-            this.syncData(testData)
+            todayData.ideas[this.currentVersion].push(idea)
+            this.syncData(todayData)
           }
         }).catch((e) => {
           console.log('add error', e)
@@ -371,8 +357,16 @@
       }
     }
 
+    onPullDownRefresh () {
+      console.log('onPullDownRefresh')
+      wx.stopPullDownRefresh()
+    }
+
+    onReachBottom () {
+      console.log('onReachBottom')
+    }
+
     syncData (data) {
-      testData = data
       this.topic = data.topic
       this.versions = data.versions
       this.ideas = data.ideas[this.currentVersion] || []
@@ -380,9 +374,6 @@
     }
 
     async login (userInfo) {
-      let data = {}
-      let ideas = []
-
       try {
         /// TODO. 这个影响了加载速度 先查找了topic然后查找了version，然后查找了idea
         let user = await AV.User.loginWithWeapp()
@@ -390,37 +381,39 @@
         this.st = AV.User.current().getSessionToken()
         let topic = await api.getFirstTopic()
         /// 设置topic
-        data.topic = topic.data
+        todayData.topic = topic.data
         /// 设置versions
         let versions = topic.data.versions
-        data.versions = topic.data.versions
-        let versionsPs = []
-        for (let i = 0; i < versions.length; i++) {
-          let a = await api.getVersion(versions[i].objectId)
-          versionsPs.push(a)
-        }
-        let ps = {}
-        for (let i = 0; i < versionsPs.length; i++) {
-          if (!ps[i]) {
-            ps[i] = []
-          }
-          let ideas = versionsPs[i].data.ideas
-          for (let j = 0; j < ideas.length; j++) {
-            let a = await api.getIdea(ideas[j].objectId, this.st)
-            ps[i].push(a)
-          }
-        }
+        todayData.versions = topic.data.versions
 
-        for (let i in ps) {
-          ideas.push(this._resolveIdeas(ps[i]))
-        }
         /// 设置ideas
-        data.ideas = ideas
-        console.log(data)
-        this.syncData(data)
+        let ideas = []
+        if (versions.length) {
+          ideas = await this.getCurrentVersionIdeas()
+        }
+        todayData.ideas[0] = ideas
+
+        console.log(todayData)
+        this.syncData(todayData)
       } catch (e) {
+        console.error('login error', e)
         this._showToast('发生错误，\n请在公众号留言')
       }
+    }
+
+    async getCurrentVersionIdeas () {
+      wx.showNavigationBarLoading()
+      let ideas = []
+      let currentVersion = this.currentVersion
+      let versionId = todayData.versions[currentVersion].objectId
+      let version = await api.getVersion(versionId)
+      let verionIdeas = version.data.ideas
+      for (let j = 0; j < verionIdeas.length; j++) {
+        let idea = await api.getIdea(verionIdeas[j].objectId, this.st)
+        ideas.push(idea)
+      }
+      wx.hideNavigationBarLoading()
+      return this._resolveIdeas(ideas)
     }
 
     _showToast (title) {
@@ -469,7 +462,7 @@
               success: function(res) {
                 that.userInfo = res.userInfo
                 that.hasUserInfo = true
-                // that.login(res.userInfo)
+                that.login(res.userInfo)
                 that.$parent.globalData.userInfo = res.userInfo
                 that.$apply()
               }
