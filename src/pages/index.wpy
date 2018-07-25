@@ -125,7 +125,7 @@
         </view>
       </repeat>
     </view>
-    <view class="reply {{isReplying || (ideas.length === 0) ? '' : 'hide'}}}">
+    <view id="ddd" class="reply {{isReplying || (ideas.length === 0) ? '' : 'hide'}}}">
       <input placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}"/>
       <button @tap="send">发送</button>
     </view>
@@ -162,6 +162,7 @@
     }
     components = {
       panel: Panel,
+      panel2: Panel,
       counter1: Counter,
       counter2: Counter,
       list: List,

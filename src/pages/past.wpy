@@ -6,7 +6,7 @@
   padding: 10rpx 40rpx;
   border-bottom: 1px #000 solid;
   .topic-date {
-    font-size: 10rpx;
+    font-size: 20rpx;
   }
 }
 
@@ -14,8 +14,8 @@
 <template>
  <scroll-view>
     <repeat for="{{topics}}" key="index" index="index" item="topic">
-      <view class="topic-wrap">
-        <view class="topic-title" @tap="tapTitle({{topic.objectId}})">{{topic.content}}</view>
+      <view class="topic-wrap" @tap="tapTitle({{topic.objectId}})">
+        <view class="topic-title">{{topic.content}}</view>
         <view class="topic-date">{{topic.createdAt}}</view>
       </view>
 
@@ -59,7 +59,11 @@ export default class Past extends wepy.page {
 
   methods = {
     tapTitle (id) {
-      console.log(id)
+      let url = 'detail?id=' + id
+      console.log(url)
+      wx.navigateTo({
+        url
+      })
     }
   }
 }

@@ -27,17 +27,21 @@
   }
 </style>
 <template>
-  <view class="panel">
+  <view class="panel" id="{{cid}}">
     <slot name="title">
-      Title
+      {{cid}}
     </slot>
     <slot>
     </slot>
+    {{cid}}
   </view>
 </template>
 <script>
   import wepy from 'wepy'
 
   export default class Panel extends wepy.component {
+    props = {
+      cid: {}
+    }
   }
 </script>
