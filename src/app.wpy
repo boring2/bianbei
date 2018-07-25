@@ -20,8 +20,8 @@ import AV from 'leancloud-storage'
 export default class extends wepy.app {
   config = {
     pages: [
-      'pages/index',
       'pages/past',
+      'pages/index',
       'pages/me'
     ],
     window: {

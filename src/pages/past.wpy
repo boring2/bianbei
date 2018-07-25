@@ -1,16 +1,66 @@
 <style lang="less">
+.topic-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10rpx 40rpx;
+  border-bottom: 1px #000 solid;
+  .topic-date {
+    font-size: 10rpx;
+  }
+}
+
 </style>
 <template>
-  <view class="container">
-    past
-  </view>
+ <scroll-view>
+    <repeat for="{{topics}}" key="index" index="index" item="topic">
+      <view class="topic-wrap">
+        <view class="topic-title" @tap="tapTitle({{topic.objectId}})">{{topic.content}}</view>
+        <view class="topic-date">{{topic.createdAt}}</view>
+      </view>
+
+    </repeat>
+  </scroll-view>
 </template>
 
 <script>
 import wepy from 'wepy'
+
 export default class Past extends wepy.page {
+  config = {
+    navigationBarTitleText: '编呗过往',
+    onReachBottomDistance: 50,
+    enablePullDownRefresh: true
+  }
+
+  data = {
+    topics: [
+      {
+        objectId: '1',
+        content: '第一个topic',
+        createdAt: '2018 02 01'
+      },
+      {
+        objectId: '2',
+        content: '第二个topic',
+        createdAt: '2018 02 01'
+      },
+      {
+        objectId: '3',
+        content: '第三个topic',
+        createdAt: '2018 02 01'
+      }
+    ]
+  }
+
   onLoad() {
 
+  }
+
+  methods = {
+    tapTitle (id) {
+      console.log(id)
+    }
   }
 }
 </script>
