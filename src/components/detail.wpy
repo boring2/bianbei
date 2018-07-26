@@ -1,0 +1,316 @@
+<style lang="less" scoped>
+.todayTitle {
+    font-size: 50rpx;
+    text-align: center;
+    padding: 20rpx;
+  }
+
+  .version-btns {
+    width: 100%;
+    display: flex;
+    margin: 40rpx 0;
+    justify-content: center;
+    padding: 0 20rpx;
+    .version-btn {
+      display: inline-block;
+      font-size: 30rpx;
+    }
+  }
+
+  .idea-view {
+    padding: 0 40rpx;
+  }
+
+  .ideaInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 20rpx;
+
+    .ideaInfo-top {
+      display: flex;
+      align-items: center;
+      border: 1px solid black;
+      border-top-left-radius: 20rpx;
+      border-top-right-radius: 20rpx;
+      width: 100%;
+      padding: 20rpx;
+      background: rgba(110, 224, 244, 0.5);
+    }
+
+    .ideaInfo-bottom {
+      width: 100%;
+      padding: 20rpx;
+      border-left: 1px solid black;
+      border-right: 1px solid black;
+    }
+
+    .ideaInfo-feedback {
+      width: 100%;
+      text-align: right;
+      border-left: 1px solid black;
+      border-right: 1px solid black;
+      border-bottom: 1px solid black;
+      button {
+        display: inline-block;
+        font-size: 30rpx;
+        margin-right: 10rpx;
+      }
+    }
+
+    .ideaInfo-avatar {
+      width: 80rpx;
+      height: 80rpx;
+      border-radius: 50%;
+      border: 1px solid black;
+    }
+
+    .ideaInfo-nickname {
+      color: black;
+      padding-left: 20rpx;
+      font-size: 35rpx;
+    }
+  }
+
+  .reply {
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    display: block;
+    background: white;
+    border: 1px solid black;
+  }
+</style>
+
+<template>
+  <view class="todayTitle">
+    {{topic.content}}
+  </view>
+  <view wx:if="{{versions.length > 1}}" class="version-btns">
+    <repeat for="{{versions}}" key="index" index="index" item="versionNum">
+      <button class="version-btn" @tap="changeVersion({{index}})">故事 {{index + 1}}</button>
+    </repeat>
+  </view>
+  <view class="idea-view">
+    <repeat for="{{ideas}}" key="index" index="index" item="idea">
+      <view class="ideaInfo">
+        <view class="ideaInfo-top">
+          <image class="ideaInfo-avatar" src="{{ idea.user.avatarUrl }}" background-size="cover"/>
+          <view class="ideaInfo-nickname">{{ idea.user.username }}</view>
+        </view>
+
+        <view class="ideaInfo-bottom">
+          <text class="ideaInfo-content">{{ idea.content }}</text>
+        </view>
+
+        <view class="ideaInfo-feedback">
+          <button @tap="handleFeedBtn({{idea.objectId}}, 'like', {{index}})">赞 {{ idea.like }}</button>
+          <button @tap="handleFeedBtn({{idea.objectId}}, 'unlike', {{index}})">踩 {{ idea.unlike }}</button>
+          <button @tap="handleFeedBtn({{idea.objectId}}, 'report', {{index}})">举报 {{ idea.report }}</button>
+          <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 0)" class="{{index !== (ideas.length - 1) ? 'hide' : ''}}">回复</button>
+          <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 1)" class="{{(index === 0 && versions.length < 3) ? '' : 'hide'}}">新故事</button>
+          <button @tap="handleReply({{idea.objectId}}, 1, {{index}}), 0" class="{{(versions.length >= 3 || index === (ideas.length - 1)) ? 'hide' : ''}}">切分支</button>
+        </view>
+      </view>
+    </repeat>
+  </view>
+  <view id="ddd" class="reply {{isReplying || (ideas.length === 0) ? '' : 'hide'}}}">
+    <input placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}"/>
+    <button @tap="send">发送</button>
+  </view>
+</template>
+
+
+<script>
+  import wepy from 'wepy'
+  import api from '../utils/api'
+  import AV from 'leancloud-storage'
+
+  let todayData = {
+    topic: {},
+    versions: [],
+    ideas: []
+  }
+  export default class Detail extends wepy.component {
+    props = {
+      topic: {}
+    }
+
+    data = {
+      versions: todayData.versions,
+      ideas: todayData.ideas[0] || [],
+      preIdeaId: '',
+      currentVersion: 0,
+      isReplying: false,
+      st: null, // sessionToken
+      inputValue: '',
+      isCheckout: false,
+      isNew: false, // 全新版本，只有在第一个idea才会有
+      sliceIndex: 0
+    }
+
+    methods = {
+      changeVersion (num, e) {
+        this.currentVersion = num
+        let currentVersionIdeas = todayData.ideas[num]
+        if (currentVersionIdeas) {
+          this.ideas = currentVersionIdeas
+        } else {
+          this.getCurrentVersionIdeas().then((ideas) => {
+            console.log(ideas)
+            todayData.ideas[num] = ideas
+            this.ideas = ideas
+            this.$apply()
+          })
+        }
+      },
+      handleFeedBtn (id, type, index) {
+        api.handleFeed(id, type, this.st).then((res) => {
+          if (res.data.code) {
+            this._showToast(res.data.msg)
+          } else {
+            let list = this.ideas
+            if (!list[index][type]) {
+              list[index][type] = 1
+            } else {
+              list[index][type] += 1
+            }
+            this.$apply()
+          }
+        })
+      },
+      handleReply (id, isCheckout, sliceIndex, isNew, e) {
+        this.isReplying = true
+        this.preIdeaId = id
+        this.isCheckout = parseInt(isCheckout) === 1
+        this.sliceIndex = sliceIndex
+        this.isNew = parseInt(isNew) === 1
+        console.log(isCheckout)
+      },
+      finishEnter (e) {
+        // this.isReplying = false
+        // console.log(e.detail.value)
+      },
+      bindKeyInput (e) {
+        this.inputValue = e.detail.value
+      },
+      send () {
+        this.isReplying = false
+        let inputValue = this.inputValue
+        const isCheckout = this.isCheckout
+        const isNew = this.isNew || this.ideas.length === 0
+        this.inputValue = ''
+
+        if (!inputValue.trim()) {
+          console.log('input value is empty')
+          this._showToast('输入不能为空')
+          return
+        }
+
+        let sendData = {
+          topicId: this.topic.objectId,
+          content: inputValue,
+          isCheckout: isCheckout
+        }
+
+        /// 如果是checkout并且只有一条idea，就不需要下面数据
+        /// (this.isCheckout && this.sliceIndex === 0) 的相反是 (!this.isCheckout || this.sliceIndex !== 0)
+        if (!isNew) {
+          sendData = Object.assign(sendData, {
+            versionId: this.versions[this.currentVersion].objectId,
+            preIdeaId: this.preIdeaId
+          })
+        }
+
+        api.postIdea(sendData, this.st).then((res) => {
+          if (res.data.code) {
+            console.log(res.data.msg)
+            this._showToast(res.data.msg)
+          } else {
+            console.log(res.data)
+            let idea = res.data.idea
+            let version = res.data.version
+            res.data.user = {}
+            idea.user.username = AV.User.current().get('username')
+            idea.user.avatarUrl = this.userInfo.avatarUrl
+            if (isNew || isCheckout) {
+              todayData.versions.push(version)
+              this.currentVersion = todayData.versions.length - 1
+              if (isNew) {
+                todayData.ideas[this.currentVersion] = []
+              } else {
+                let sliceIdea = this.ideas.slice(0, this.sliceIndex + 1)
+                todayData.ideas[this.currentVersion] = sliceIdea
+              }
+            }
+            todayData.ideas[this.currentVersion].push(idea)
+            this.syncData(todayData)
+          }
+        }).catch((e) => {
+          console.log('add error', e)
+        })
+      }
+    }
+
+    syncData (data) {
+      this.topic = data.topic
+      this.versions = data.versions
+      this.ideas = data.ideas[this.currentVersion] || []
+      this.$apply()
+    }
+
+    async fetchTopicData () {
+      if (!this.topic.id) {
+        return
+      }
+      try {
+        /// 设置topic
+        let topic = this.topic
+        todayData.topic = topic
+        /// 设置versions
+        let versions = topic.versions
+        todayData.versions = topic.versions
+
+        /// 设置ideas
+        let ideas = []
+        if (versions.length) {
+          ideas = await this.getCurrentVersionIdeas()
+        }
+        todayData.ideas[0] = ideas
+
+        console.log(todayData)
+        this.syncData(todayData)
+      } catch (e) {
+        console.error('fetch data error', e)
+      }
+    }
+
+    async getCurrentVersionIdeas () {
+      wx.showNavigationBarLoading()
+      let ideas = []
+      let currentVersion = this.currentVersion
+      let versionId = todayData.versions[currentVersion].objectId
+      let version = await api.getVersion(versionId)
+      let verionIdeas = version.data.ideas
+      for (let j = 0; j < verionIdeas.length; j++) {
+        let idea = await api.getIdea(verionIdeas[j].objectId, this.st)
+        ideas.push(idea)
+      }
+      wx.hideNavigationBarLoading()
+      return this._resolveIdeas(ideas)
+    }
+
+    _resolveIdeas (ideas) {
+      let result = []
+      ideas.forEach((idea) => {
+        result.push(idea.data)
+      })
+      return result
+    }
+
+    onLoad () {
+      this.fetchTopicData()
+    }
+  }
+</script>

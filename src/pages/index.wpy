@@ -2,88 +2,88 @@
   view {
     box-sizing: border-box;
   }
-  .todayTitle {
-    font-size: 50rpx;
-    text-align: center;
-    padding: 20rpx;
-  }
+  // .todayTitle {
+  //   font-size: 50rpx;
+  //   text-align: center;
+  //   padding: 20rpx;
+  // }
 
-  .version-btns {
-    width: 100%;
-    display: flex;
-    margin: 40rpx 0;
-    justify-content: center;
-    padding: 0 20rpx;
-    .version-btn {
-      display: inline-block;
-      font-size: 30rpx;
-    }
-  }
+  // .version-btns {
+  //   width: 100%;
+  //   display: flex;
+  //   margin: 40rpx 0;
+  //   justify-content: center;
+  //   padding: 0 20rpx;
+  //   .version-btn {
+  //     display: inline-block;
+  //     font-size: 30rpx;
+  //   }
+  // }
 
-  .idea-view {
-    padding: 0 40rpx;
-  }
+  // .idea-view {
+  //   padding: 0 40rpx;
+  // }
 
-  .ideaInfo {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 20rpx;
+  // .ideaInfo {
+  //   display: flex;
+  //   flex-direction: column;
+  //   align-items: flex-start;
+  //   margin-bottom: 20rpx;
 
-    .ideaInfo-top {
-      display: flex;
-      align-items: center;
-      border: 1px solid black;
-      border-top-left-radius: 20rpx;
-      border-top-right-radius: 20rpx;
-      width: 100%;
-      padding: 20rpx;
-      background: rgba(110, 224, 244, 0.5);
-    }
+  //   .ideaInfo-top {
+  //     display: flex;
+  //     align-items: center;
+  //     border: 1px solid black;
+  //     border-top-left-radius: 20rpx;
+  //     border-top-right-radius: 20rpx;
+  //     width: 100%;
+  //     padding: 20rpx;
+  //     background: rgba(110, 224, 244, 0.5);
+  //   }
 
-    .ideaInfo-bottom {
-      width: 100%;
-      padding: 20rpx;
-      border-left: 1px solid black;
-      border-right: 1px solid black;
-    }
+  //   .ideaInfo-bottom {
+  //     width: 100%;
+  //     padding: 20rpx;
+  //     border-left: 1px solid black;
+  //     border-right: 1px solid black;
+  //   }
 
-    .ideaInfo-feedback {
-      width: 100%;
-      text-align: right;
-      border-left: 1px solid black;
-      border-right: 1px solid black;
-      border-bottom: 1px solid black;
-      button {
-        display: inline-block;
-        font-size: 30rpx;
-        margin-right: 10rpx;
-      }
-    }
+  //   .ideaInfo-feedback {
+  //     width: 100%;
+  //     text-align: right;
+  //     border-left: 1px solid black;
+  //     border-right: 1px solid black;
+  //     border-bottom: 1px solid black;
+  //     button {
+  //       display: inline-block;
+  //       font-size: 30rpx;
+  //       margin-right: 10rpx;
+  //     }
+  //   }
 
-    .ideaInfo-avatar {
-      width: 80rpx;
-      height: 80rpx;
-      border-radius: 50%;
-      border: 1px solid black;
-    }
+  //   .ideaInfo-avatar {
+  //     width: 80rpx;
+  //     height: 80rpx;
+  //     border-radius: 50%;
+  //     border: 1px solid black;
+  //   }
 
-    .ideaInfo-nickname {
-      color: black;
-      padding-left: 20rpx;
-      font-size: 35rpx;
-    }
-  }
+  //   .ideaInfo-nickname {
+  //     color: black;
+  //     padding-left: 20rpx;
+  //     font-size: 35rpx;
+  //   }
+  // }
 
-  .reply {
-    width: 100%;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    display: block;
-    background: white;
-    border: 1px solid black;
-  }
+  // .reply {
+  //   width: 100%;
+  //   position: fixed;
+  //   bottom: 0;
+  //   left: 0;
+  //   display: block;
+  //   background: white;
+  //   border: 1px solid black;
+  // }
   .hide {
     display: none !important;
   }
@@ -94,7 +94,8 @@
     <view class="container">
       <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
     </view>
-    <view class="todayTitle">
+    <detail :topic.sync="topic"></detail>
+    <!-- <view class="todayTitle">
       {{topic.content}}
     </view>
     <view wx:if="{{versions.length > 1}}" class="version-btns">
@@ -128,10 +129,8 @@
     <view id="ddd" class="reply {{isReplying || (ideas.length === 0) ? '' : 'hide'}}}">
       <input placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}"/>
       <button @tap="send">发送</button>
-    </view>
-    <!-- <view class="container">
-      <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
     </view> -->
+
     <toast />
   </scroll-view>
 </template>
@@ -146,13 +145,14 @@
   import testMixin from '../mixins/test'
   import AV from 'leancloud-storage'
   import api from '../utils/api'
+  import Detail from '../components/detail'
   // import LocalStorage from '../utils/localstorage'
 
-  let todayData = {
-    topic: {},
-    versions: [],
-    ideas: []
-  }
+  // let todayData = {
+  //   topic: {},
+  //   versions: [],
+  //   ideas: []
+  // }
 
   export default class Index extends wepy.page {
     config = {
@@ -167,28 +167,30 @@
       counter2: Counter,
       list: List,
       group: Group,
-      toast: Toast
+      toast: Toast,
+      detail: Detail
     }
 
     mixins = [testMixin]
 
     data = {
-      result: todayData,
-      ideas: todayData.ideas[0] || [],
-      topic: todayData.topic,
-      versions: todayData.versions,
-      preIdeaId: '',
+      topic: {},
+      // result: todayData,
+      // ideas: todayData.ideas[0] || [],
+      // topic: todayData.topic,
+      // versions: todayData.versions,
+      // preIdeaId: '',
       userInfo: {
         nickName: '加载中...'
       },
-      hasUserInfo: false,
-      currentVersion: 0,
-      isReplying: false,
-      st: null, // sessionToken
-      inputValue: '',
-      isCheckout: false,
-      isNew: false, // 全新版本，只有在第一个idea才会有
-      sliceIndex: 0
+      hasUserInfo: false
+      // currentVersion: 0,
+      // isReplying: false,
+      // st: null, // sessionToken
+      // inputValue: '',
+      // isCheckout: false,
+      // isNew: false, // 全新版本，只有在第一个idea才会有
+      // sliceIndex: 0
     }
 
     computed = {
@@ -198,109 +200,6 @@
     }
 
     methods = {
-      changeVersion (num, e) {
-        this.currentVersion = num
-        let currentVersionIdeas = todayData.ideas[num]
-        if (currentVersionIdeas) {
-          this.ideas = currentVersionIdeas
-        } else {
-          this.getCurrentVersionIdeas().then((ideas) => {
-            console.log(ideas)
-            todayData.ideas[num] = ideas
-            this.ideas = ideas
-            this.$apply()
-          })
-        }
-      },
-      handleFeedBtn (id, type, index) {
-        api.handleFeed(id, type, this.st).then((res) => {
-          if (res.data.code) {
-            this._showToast(res.data.msg)
-          } else {
-            let list = this.ideas
-            if (!list[index][type]) {
-              list[index][type] = 1
-            } else {
-              list[index][type] += 1
-            }
-            this.$apply()
-          }
-        })
-      },
-      handleReply (id, isCheckout, sliceIndex, isNew, e) {
-        this.isReplying = true
-        this.preIdeaId = id
-        this.isCheckout = parseInt(isCheckout) === 1
-        this.sliceIndex = sliceIndex
-        this.isNew = parseInt(isNew) === 1
-        console.log(isCheckout)
-      },
-      finishEnter (e) {
-        // this.isReplying = false
-        // console.log(e.detail.value)
-      },
-      bindKeyInput (e) {
-        this.inputValue = e.detail.value
-      },
-      send () {
-        this.isReplying = false
-        let inputValue = this.inputValue
-        const isCheckout = this.isCheckout
-        const isNew = this.isNew || this.ideas.length === 0
-        this.inputValue = ''
-
-        if (!inputValue.trim()) {
-          console.log('input value is empty')
-          this._showToast('输入不能为空')
-          return
-        }
-
-        let sendData = {
-          topicId: this.topic.objectId,
-          content: inputValue,
-          isCheckout: isCheckout
-        }
-
-        /// 如果是checkout并且只有一条idea，就不需要下面数据
-        /// (this.isCheckout && this.sliceIndex === 0) 的相反是 (!this.isCheckout || this.sliceIndex !== 0)
-        if (!isNew) {
-          sendData = Object.assign(sendData, {
-            versionId: this.versions[this.currentVersion].objectId,
-            preIdeaId: this.preIdeaId
-          })
-        }
-
-        api.postIdea(sendData, this.st).then((res) => {
-          if (res.data.code) {
-            console.log(res.data.msg)
-            this._showToast(res.data.msg)
-          } else {
-            console.log(res.data)
-            let idea = res.data.idea
-            let version = res.data.version
-            res.data.user = {}
-            idea.user.username = AV.User.current().get('username')
-            idea.user.avatarUrl = this.userInfo.avatarUrl
-            if (isNew || isCheckout) {
-              todayData.versions.push(version)
-              this.currentVersion = todayData.versions.length - 1
-              if (isNew) {
-                todayData.ideas[this.currentVersion] = []
-              } else {
-                let sliceIdea = this.ideas.slice(0, this.sliceIndex + 1)
-                todayData.ideas[this.currentVersion] = sliceIdea
-              }
-            }
-            todayData.ideas[this.currentVersion].push(idea)
-            this.syncData(todayData)
-          }
-        }).catch((e) => {
-          console.log('add error', e)
-        })
-      },
-      plus () {
-        this.mynum++
-      },
       toast () {
         let promise = this.$invoke('toast', 'show', {
           title: '自定义标题',
@@ -321,33 +220,6 @@
         this.$parent.globalData.userInfo = e.detail.userInfo
         console.log(e.detail.userInfo)
         // this.login(this.userInfo)
-      },
-
-      communicate () {
-        console.log(this.$name + ' tap')
-
-        this.$invoke('counter2', 'minus', 45, 6)
-        this.$invoke('counter1', 'plus', 45, 6)
-
-        this.$broadcast('index-broadcast', 1, 3, 4)
-      },
-      request () {
-        let self = this
-        let i = 10
-        let map = ['MA==', 'MQo=', 'Mg==', 'Mw==', 'NA==', 'NQ==', 'Ng==', 'Nw==', 'OA==', 'OQ==']
-        while (i--) {
-          wepy.request({
-            url: 'https://www.madcoder.cn/tests/sleep.php?time=1&t=css&c=' + map[i] + '&i=' + i,
-            success: function (d) {
-              self.netrst += d.data + '.'
-              self.$apply()
-            }
-          })
-        }
-      },
-      counterEmit (...args) {
-        let $event = args[args.length - 1]
-        console.log(`${this.$name} receive ${$event.name} from ${$event.source.$name}`)
       }
     }
 
@@ -367,13 +239,6 @@
       console.log('onReachBottom')
     }
 
-    syncData (data) {
-      this.topic = data.topic
-      this.versions = data.versions
-      this.ideas = data.ideas[this.currentVersion] || []
-      this.$apply()
-    }
-
     async login (userInfo) {
       try {
         /// TODO. 这个影响了加载速度 先查找了topic然后查找了version，然后查找了idea
@@ -381,40 +246,13 @@
         await user.set(userInfo).save()
         this.st = AV.User.current().getSessionToken()
         let topic = await api.getFirstTopic()
-        /// 设置topic
-        todayData.topic = topic.data
-        /// 设置versions
-        let versions = topic.data.versions
-        todayData.versions = topic.data.versions
-
-        /// 设置ideas
-        let ideas = []
-        if (versions.length) {
-          ideas = await this.getCurrentVersionIdeas()
-        }
-        todayData.ideas[0] = ideas
-
-        console.log(todayData)
-        this.syncData(todayData)
+        console.log(topic, '------')
+        this.topic = topic.data
+        this.$apply()
       } catch (e) {
         console.error('login error', e)
         this._showToast('发生错误，\n请在公众号留言')
       }
-    }
-
-    async getCurrentVersionIdeas () {
-      wx.showNavigationBarLoading()
-      let ideas = []
-      let currentVersion = this.currentVersion
-      let versionId = todayData.versions[currentVersion].objectId
-      let version = await api.getVersion(versionId)
-      let verionIdeas = version.data.ideas
-      for (let j = 0; j < verionIdeas.length; j++) {
-        let idea = await api.getIdea(verionIdeas[j].objectId, this.st)
-        ideas.push(idea)
-      }
-      wx.hideNavigationBarLoading()
-      return this._resolveIdeas(ideas)
     }
 
     _showToast (title) {
@@ -422,37 +260,6 @@
         title: title
       })
     }
-
-    _resolveIdeas (ideas) {
-      let result = []
-      ideas.forEach((idea) => {
-        result.push(idea.data)
-      })
-      return result
-    }
-    // _resolveData (rawData) {
-    //   let res = []
-    //   function fn (raw) {
-    //     let resolveData = {}
-    //     resolveData.objectId = raw.data.objectId
-    //     resolveData.content = raw.data.content
-    //     resolveData.like = raw.data.like
-    //     resolveData.unlike = raw.data.unlike
-    //     resolveData.report = raw.data.report
-    //     resolveData.username = raw.data.user.username || raw.data.user.nickName
-    //     resolveData.avatarUrl = raw.data.user.avatarUrl
-    //     return resolveData
-    //   }
-    //   if (Array.isArray(rawData)) {
-    //     rawData.forEach((raw) => {
-    //       let resolveData = fn(raw)
-    //       res.push(resolveData)
-    //     })
-    //     return res
-    //   } else {
-    //     return fn(rawData)
-    //   }
-    // }
 
     onLoad() {
       let that = this
