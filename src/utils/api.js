@@ -6,6 +6,9 @@ let url = {
   firstTopic: {
     url: `${domain}/topic/today`
   },
+  topic: {
+    url: `${domain}/topic`
+  },
   version: {
     url: `${domain}/version`
   },
@@ -20,7 +23,11 @@ let api = {
   },
 
   getTopics () {
+    return wepy.request(url.topic.url)
+  },
 
+  getTopic (id) {
+    return wepy.request(`${url.topic.url}/${id}`)
   },
 
   getVersion (id) {

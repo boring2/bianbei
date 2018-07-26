@@ -1,7 +1,5 @@
 <style lang="less">
-  view {
-    box-sizing: border-box;
-  }
+
   // .todayTitle {
   //   font-size: 50rpx;
   //   text-align: center;
@@ -84,55 +82,16 @@
   //   background: white;
   //   border: 1px solid black;
   // }
-  .hide {
-    display: none !important;
-  }
 </style>
 
 <template>
-  <scroll-view id="ideaContainer">
-    <view class="container">
+  <view class="container">
+    <view>
       <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
     </view>
-    <detail :topic.sync="topic"></detail>
-    <!-- <view class="todayTitle">
-      {{topic.content}}
-    </view>
-    <view wx:if="{{versions.length > 1}}" class="version-btns">
-      <repeat for="{{versions}}" key="index" index="index" item="versionNum">
-        <button class="version-btn" @tap="changeVersion({{index}})">故事 {{index + 1}}</button>
-      </repeat>
-    </view>
-    <view class="idea-view">
-      <repeat for="{{ideas}}" key="index" index="index" item="idea">
-        <view class="ideaInfo">
-          <view class="ideaInfo-top">
-            <image class="ideaInfo-avatar" src="{{ idea.user.avatarUrl }}" background-size="cover"/>
-            <view class="ideaInfo-nickname">{{ idea.user.username }}</view>
-          </view>
-
-          <view class="ideaInfo-bottom">
-            <text class="ideaInfo-content">{{ idea.content }}</text>
-          </view>
-
-          <view class="ideaInfo-feedback">
-            <button @tap="handleFeedBtn({{idea.objectId}}, 'like', {{index}})">赞 {{ idea.like }}</button>
-            <button @tap="handleFeedBtn({{idea.objectId}}, 'unlike', {{index}})">踩 {{ idea.unlike }}</button>
-            <button @tap="handleFeedBtn({{idea.objectId}}, 'report', {{index}})">举报 {{ idea.report }}</button>
-            <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 0)" class="{{index !== (ideas.length - 1) ? 'hide' : ''}}">回复</button>
-            <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 1)" class="{{(index === 0 && versions.length < 3) ? '' : 'hide'}}">新故事</button>
-            <button @tap="handleReply({{idea.objectId}}, 1, {{index}}), 0" class="{{(versions.length >= 3 || index === (ideas.length - 1)) ? 'hide' : ''}}">切分支</button>
-          </view>
-        </view>
-      </repeat>
-    </view>
-    <view id="ddd" class="reply {{isReplying || (ideas.length === 0) ? '' : 'hide'}}}">
-      <input placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}"/>
-      <button @tap="send">发送</button>
-    </view> -->
-
+    <detail :topic.sync="topic" :st.sync="st" @showToast.user="showToast"></detail>
     <toast />
-  </scroll-view>
+  </view>
 </template>
 
 <script>
@@ -183,7 +142,8 @@
       userInfo: {
         nickName: '加载中...'
       },
-      hasUserInfo: false
+      hasUserInfo: false,
+      st: ''
       // currentVersion: 0,
       // isReplying: false,
       // st: null, // sessionToken
@@ -194,32 +154,21 @@
     }
 
     computed = {
-      now () {
-        return +new Date()
-      }
     }
 
     methods = {
-      toast () {
-        let promise = this.$invoke('toast', 'show', {
-          title: '自定义标题',
-          img: 'https://raw.githubusercontent.com/kiinlam/wetoast/master/images/star.png'
-        })
-
-        promise.then((d) => {
-          console.log('toast done')
-        })
-      },
-      tap () {
-        console.log('do noting from ' + this.$name)
-      },
-
       getUserInfo: function(e) {
         this.userInfo = e.detail.userInfo
         this.hasUserInfo = true
         this.$parent.globalData.userInfo = e.detail.userInfo
         console.log(e.detail.userInfo)
         // this.login(this.userInfo)
+      },
+
+      showToast (title) {
+        this.$invoke('toast', 'show', {
+          title: title
+        })
       }
     }
 
@@ -246,9 +195,9 @@
         await user.set(userInfo).save()
         this.st = AV.User.current().getSessionToken()
         let topic = await api.getFirstTopic()
-        console.log(topic, '------')
         this.topic = topic.data
         this.$apply()
+        this.$broadcast('topicLoad')
       } catch (e) {
         console.error('login error', e)
         this._showToast('发生错误，\n请在公众号留言')
@@ -256,9 +205,7 @@
     }
 
     _showToast (title) {
-      this.$invoke('toast', 'show', {
-        title: title
-      })
+      this.methods['showToast'].call(this, title)
     }
 
     onLoad() {

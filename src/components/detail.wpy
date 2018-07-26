@@ -1,4 +1,4 @@
-<style lang="less" scoped>
+<style lang="less">
 .todayTitle {
     font-size: 50rpx;
     text-align: center;
@@ -81,44 +81,50 @@
     background: white;
     border: 1px solid black;
   }
+  .hide {
+    display: none !important;
+  }
+
 </style>
 
 <template>
-  <view class="todayTitle">
-    {{topic.content}}
-  </view>
-  <view wx:if="{{versions.length > 1}}" class="version-btns">
-    <repeat for="{{versions}}" key="index" index="index" item="versionNum">
-      <button class="version-btn" @tap="changeVersion({{index}})">故事 {{index + 1}}</button>
-    </repeat>
-  </view>
-  <view class="idea-view">
-    <repeat for="{{ideas}}" key="index" index="index" item="idea">
-      <view class="ideaInfo">
-        <view class="ideaInfo-top">
-          <image class="ideaInfo-avatar" src="{{ idea.user.avatarUrl }}" background-size="cover"/>
-          <view class="ideaInfo-nickname">{{ idea.user.username }}</view>
-        </view>
+  <scroll-view>
+    <view class="todayTitle">
+      {{topic.content}}
+    </view>
+    <view wx:if="{{versions.length > 1}}" class="version-btns">
+      <repeat for="{{versions}}" key="index" index="index" item="versionNum">
+        <button class="version-btn" @tap="changeVersion({{index}})">故事 {{index + 1}}</button>
+      </repeat>
+    </view>
+    <view class="idea-view">
+      <repeat for="{{ideas}}" key="index" index="index" item="idea">
+        <view class="ideaInfo">
+          <view class="ideaInfo-top">
+            <image class="ideaInfo-avatar" src="{{ idea.user.avatarUrl }}" background-size="cover"/>
+            <view class="ideaInfo-nickname">{{ idea.user.username }}</view>
+          </view>
 
-        <view class="ideaInfo-bottom">
-          <text class="ideaInfo-content">{{ idea.content }}</text>
-        </view>
+          <view class="ideaInfo-bottom">
+            <text class="ideaInfo-content">{{ idea.content }}</text>
+          </view>
 
-        <view class="ideaInfo-feedback">
-          <button @tap="handleFeedBtn({{idea.objectId}}, 'like', {{index}})">赞 {{ idea.like }}</button>
-          <button @tap="handleFeedBtn({{idea.objectId}}, 'unlike', {{index}})">踩 {{ idea.unlike }}</button>
-          <button @tap="handleFeedBtn({{idea.objectId}}, 'report', {{index}})">举报 {{ idea.report }}</button>
-          <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 0)" class="{{index !== (ideas.length - 1) ? 'hide' : ''}}">回复</button>
-          <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 1)" class="{{(index === 0 && versions.length < 3) ? '' : 'hide'}}">新故事</button>
-          <button @tap="handleReply({{idea.objectId}}, 1, {{index}}), 0" class="{{(versions.length >= 3 || index === (ideas.length - 1)) ? 'hide' : ''}}">切分支</button>
+          <view class="ideaInfo-feedback">
+            <button @tap="handleFeedBtn({{idea.objectId}}, 'like', {{index}})">赞 {{ idea.like }}</button>
+            <button @tap="handleFeedBtn({{idea.objectId}}, 'unlike', {{index}})">踩 {{ idea.unlike }}</button>
+            <button @tap="handleFeedBtn({{idea.objectId}}, 'report', {{index}})">举报 {{ idea.report }}</button>
+            <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 0)" class="{{index !== (ideas.length - 1) ? 'hide' : ''}}">回复</button>
+            <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 1)" class="{{(index === 0 && versions.length < 3) ? '' : 'hide'}}">新故事</button>
+            <button @tap="handleReply({{idea.objectId}}, 1, {{index}}), 0" class="{{(versions.length >= 3 || index === (ideas.length - 1)) ? 'hide' : ''}}">切分支</button>
+          </view>
         </view>
-      </view>
-    </repeat>
-  </view>
-  <view id="ddd" class="reply {{isReplying || (ideas.length === 0) ? '' : 'hide'}}}">
-    <input placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}"/>
-    <button @tap="send">发送</button>
-  </view>
+      </repeat>
+    </view>
+    <view class="reply" wx:if="{{(isReplying || ideas.length === 0) && isReady}}">
+      <input placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}"/>
+      <button @tap="send">发送</button>
+    </view>
+  </scroll-view>
 </template>
 
 
@@ -134,7 +140,8 @@
   }
   export default class Detail extends wepy.component {
     props = {
-      topic: {}
+      topic: {},
+      st: {}
     }
 
     data = {
@@ -147,7 +154,8 @@
       inputValue: '',
       isCheckout: false,
       isNew: false, // 全新版本，只有在第一个idea才会有
-      sliceIndex: 0
+      sliceIndex: 0,
+      isReady: false
     }
 
     methods = {
@@ -168,7 +176,7 @@
       handleFeedBtn (id, type, index) {
         api.handleFeed(id, type, this.st).then((res) => {
           if (res.data.code) {
-            this._showToast(res.data.msg)
+            this.$emit('showToast', res.data.msg)
           } else {
             let list = this.ideas
             if (!list[index][type]) {
@@ -189,8 +197,8 @@
         console.log(isCheckout)
       },
       finishEnter (e) {
-        // this.isReplying = false
-        // console.log(e.detail.value)
+        this.isReplying = false
+        console.log(e.detail.value)
       },
       bindKeyInput (e) {
         this.inputValue = e.detail.value
@@ -204,7 +212,7 @@
 
         if (!inputValue.trim()) {
           console.log('input value is empty')
-          this._showToast('输入不能为空')
+          this.$emit('showToast', '输入不能为空')
           return
         }
 
@@ -233,7 +241,7 @@
             let version = res.data.version
             res.data.user = {}
             idea.user.username = AV.User.current().get('username')
-            idea.user.avatarUrl = this.userInfo.avatarUrl
+            idea.user.avatarUrl = this.$parent.userInfo.avatarUrl
             if (isNew || isCheckout) {
               todayData.versions.push(version)
               this.currentVersion = todayData.versions.length - 1
@@ -260,32 +268,6 @@
       this.$apply()
     }
 
-    async fetchTopicData () {
-      if (!this.topic.id) {
-        return
-      }
-      try {
-        /// 设置topic
-        let topic = this.topic
-        todayData.topic = topic
-        /// 设置versions
-        let versions = topic.versions
-        todayData.versions = topic.versions
-
-        /// 设置ideas
-        let ideas = []
-        if (versions.length) {
-          ideas = await this.getCurrentVersionIdeas()
-        }
-        todayData.ideas[0] = ideas
-
-        console.log(todayData)
-        this.syncData(todayData)
-      } catch (e) {
-        console.error('fetch data error', e)
-      }
-    }
-
     async getCurrentVersionIdeas () {
       wx.showNavigationBarLoading()
       let ideas = []
@@ -309,8 +291,46 @@
       return result
     }
 
+    async fetchTopicData () {
+      if (!this.topic.objectId) {
+        return
+      }
+      try {
+        /// 设置topic
+        let topic = this.topic
+        todayData.topic = topic
+        /// 设置versions
+        let versions = topic.versions
+        todayData.versions = topic.versions
+
+        /// 设置ideas
+        let ideas = []
+        if (versions.length) {
+          ideas = await this.getCurrentVersionIdeas()
+        }
+        todayData.ideas[0] = ideas
+        console.log('fetch', (this.isReplying || (this.ideas.length === 0)) && this.isReady)
+        this.isReady = true
+        this.syncData(todayData)
+        console.log('fetch2', (this.isReplying || (this.ideas.length === 0)) && this.isReady)
+      } catch (e) {
+        console.error('fetch data error', e)
+      }
+    }
+
+    events = {
+      topicLoad () {
+        console.log('----------event')
+        this.fetchTopicData()
+      }
+    }
+
     onLoad () {
-      this.fetchTopicData()
+      console.log('+++++', (this.isReplying || (this.ideas.length === 0)) && this.isReady)
+    }
+
+    onReady() {
+      console.log('-----', this.isReady)
     }
   }
 </script>

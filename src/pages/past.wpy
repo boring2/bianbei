@@ -18,13 +18,13 @@
         <view class="topic-title">{{topic.content}}</view>
         <view class="topic-date">{{topic.createdAt}}</view>
       </view>
-
     </repeat>
   </scroll-view>
 </template>
 
 <script>
 import wepy from 'wepy'
+import api from '../utils/api'
 
 export default class Past extends wepy.page {
   config = {
@@ -54,7 +54,20 @@ export default class Past extends wepy.page {
   }
 
   onLoad() {
+    this.fetchTopics()
+  }
 
+  async fetchTopics () {
+    let topics = await api.getTopics()
+    this.topics = topics.data
+    this.topics.map((topic) => {
+      topic.createdAt = this._resolveDate(topic.createdAt)
+    })
+    this.$apply()
+  }
+
+  _resolveDate (date) {
+    return date.split('T')[0]
   }
 
   methods = {

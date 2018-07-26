@@ -3,18 +3,38 @@
 </style>
 <template>
   <view class="container">
-    detail
+    <detail :topic.sync="topic" :st.sync="st"></detail>
   </view>
 </template>
 
 <script>
 import wepy from 'wepy'
-export default class Me extends wepy.page {
+import Detail from '../components/detail'
+import api from '../utils/api'
+import AV from 'leancloud-storage'
+
+export default class DetailPage extends wepy.page {
   config = {
     navigationBarTitleText: '编呗过往'
   }
+
+  data = {
+    topic: {},
+    st: ''
+  }
+
+  components = {
+    detail: Detail
+  }
+
   onLoad(options) {
     let id = options.id
+    this.st = AV.User.current().getSessionToken()
+    api.getTopic(id).then((topic) => {
+      this.topic = topic.data
+      this.$apply()
+      this.$broadcast('topicLoad')
+    })
     console.log('detail', options.id)
   }
 }
