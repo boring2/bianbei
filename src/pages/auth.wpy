@@ -1,0 +1,41 @@
+<style lang="less" scoped>
+  .infoWrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items:center;
+  }
+  .avatar {
+    width: 200rpx;
+    border-radius: 50%;
+  }
+  .content {
+    text-align: center;
+    margin-top: 100rpx;
+  }
+</style>
+<template>
+  <view class="container">
+    <view>
+      <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取微信权限 </button>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+export default class Me extends wepy.page {
+  data = {
+    hasUserInfo: false
+  }
+
+  getUserInfo (e) {
+    this.userInfo = e.detail.userInfo
+    this.hasUserInfo = true
+    this.$parent.globalData.userInfo = e.detail.userInfo
+  }
+  onLoad() {
+
+  }
+}
+</script>

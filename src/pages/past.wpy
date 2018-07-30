@@ -28,29 +28,11 @@ import api from '../utils/api'
 
 export default class Past extends wepy.page {
   config = {
-    navigationBarTitleText: '编呗过往',
-    onReachBottomDistance: 50,
-    enablePullDownRefresh: true
+    navigationBarTitleText: '编呗过往'
   }
 
   data = {
-    topics: [
-      {
-        objectId: '1',
-        content: '第一个topic',
-        createdAt: '2018 02 01'
-      },
-      {
-        objectId: '2',
-        content: '第二个topic',
-        createdAt: '2018 02 01'
-      },
-      {
-        objectId: '3',
-        content: '第三个topic',
-        createdAt: '2018 02 01'
-      }
-    ]
+    topics: []
   }
 
   onLoad() {

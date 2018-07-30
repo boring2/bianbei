@@ -1,7 +1,7 @@
 import wepy from 'wepy'
 
-let domain = 'http://127.0.0.1:3000'
-
+// let domain = 'http://127.0.0.1:3000'
+let domain = 'https://bianbei.leanapp.cn'
 let url = {
   firstTopic: {
     url: `${domain}/topic/today`
@@ -14,6 +14,9 @@ let url = {
   },
   idea: {
     url: `${domain}/idea`
+  },
+  user: {
+    setRoleUrl: `${domain}/user/setrole`
   }
 }
 
@@ -63,6 +66,19 @@ let api = {
     return wepy.request({
       url: URL,
       method: 'POST',
+      header: {
+        'X-LC-Session': session
+      }
+    })
+  },
+
+  setrole (session) {
+    return wepy.request({
+      url: `${url.user.setRoleUrl}`,
+      method: 'POST',
+      data: {
+        roleName: 'Normal'
+      },
       header: {
         'X-LC-Session': session
       }

@@ -87,7 +87,7 @@
 <template>
   <view class="container">
     <view>
-      <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
+      <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取信息权限 </button>
     </view>
     <detail :topic.sync="topic" :st.sync="st" @showToast.user="showToast"></detail>
     <toast />
@@ -117,7 +117,8 @@
     config = {
       navigationBarTitleText: '编呗今日',
       onReachBottomDistance: 50,
-      enablePullDownRefresh: true
+      enablePullDownRefresh: true,
+      backgroundTextStyle: 'dark'
     }
     components = {
       panel: Panel,
@@ -162,7 +163,7 @@
         this.hasUserInfo = true
         this.$parent.globalData.userInfo = e.detail.userInfo
         console.log(e.detail.userInfo)
-        // this.login(this.userInfo)
+        this.login(this.userInfo)
       },
 
       showToast (title) {
@@ -180,26 +181,33 @@
     }
 
     onPullDownRefresh () {
+      if (!this.hasUserInfo) {
+        wx.hideNavigationBarLoading()
+      }
       console.log('onPullDownRefresh')
-      wx.stopPullDownRefresh()
+      this.$broadcast('topicLoad')
     }
 
     onReachBottom () {
+      this.$broadcast('topicLoad')
       console.log('onReachBottom')
     }
 
     async login (userInfo) {
       try {
-        /// TODO. 这个影响了加载速度 先查找了topic然后查找了version，然后查找了idea
         let user = await AV.User.loginWithWeapp()
-        await user.set(userInfo).save()
         this.st = AV.User.current().getSessionToken()
+        if (!user.get('nickName')) {
+          await api.setrole(this.st)
+          await user.set(userInfo).save()
+        }
         let topic = await api.getFirstTopic()
         this.topic = topic.data
         this.$apply()
         this.$broadcast('topicLoad')
       } catch (e) {
         console.error('login error', e)
+        console.error(AV.User.current().getSessionToken())
         this._showToast('发生错误，\n请在公众号留言')
       }
     }

@@ -8,13 +8,13 @@ var Version = AV.Object.extend('Version')
 module.exports = {
   createTopic(content, user) {
     let defaultTopic = {
-			content: content,
-			user: user,
-			versions: []
-		}
-		var topic = new Topic()
-		var acl = aclGen.createRoleACL(USER_ROLE_CONSTANT.NORMAL)
-		topic.set(defaultTopic)
+      content: content,
+      user: user,
+      versions: []
+    }
+    var topic = new Topic()
+    var acl = aclGen.createRoleACL(USER_ROLE_CONSTANT.NORMAL)
+    topic.set(defaultTopic)
     topic.setACL(acl)
     return topic
   },
@@ -30,9 +30,9 @@ module.exports = {
       nextIdeas: []
     }
     let idea = new Idea()
-		idea.set(defaultIdea)
-		var acl = aclGen.createUserAcl(user)
-		idea.setACL(acl)
+    idea.set(defaultIdea)
+    var acl = aclGen.createUserAcl(user)
+    idea.setACL(acl)
     return idea
   },
 
@@ -44,7 +44,7 @@ module.exports = {
     let version = new Version()
     version.set(defaultVersion)
     var acl = aclGen.createRoleACL(USER_ROLE_CONSTANT.NORMAL)
-		version.setACL(acl)
+    version.setACL(acl)
     return version
   }
 
