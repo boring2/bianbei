@@ -20,6 +20,7 @@ router.get('/than3', function(req, res, next) {
 router.get('/today', function(req, res, next) {
   var query = new AV.Query(Topic)
   query.descending('createdAt')
+  query.include('versions')
   query.first().then(function(results) {
     res.send(results)
   }).catch((e) => {
@@ -39,6 +40,7 @@ router.get('/:id', function(req, res, next) {
 router.get('/', function(req, res, next) {
   var query = new AV.Query(Topic)
   query.descending('createdAt')
+  query.include('versions')
   query.find().then(function(results) {
     results.shift()
     res.send(results)

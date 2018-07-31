@@ -18,4 +18,14 @@ router.get('/:id', function(req, res, next) {
 	})
 })
 
+router.get('/base/:id', function(req, res, next) {
+  let id = req.params.id
+  var query = new AV.Query(Version)
+	query.get(id).then(function(results) {
+		res.send(results)
+	}).catch((e) => {
+		res.send(e)
+	})
+})
+
 module.exports = router

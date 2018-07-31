@@ -1,95 +1,17 @@
 <style lang="less">
-
-  // .todayTitle {
-  //   font-size: 50rpx;
-  //   text-align: center;
-  //   padding: 20rpx;
-  // }
-
-  // .version-btns {
-  //   width: 100%;
-  //   display: flex;
-  //   margin: 40rpx 0;
-  //   justify-content: center;
-  //   padding: 0 20rpx;
-  //   .version-btn {
-  //     display: inline-block;
-  //     font-size: 30rpx;
-  //   }
-  // }
-
-  // .idea-view {
-  //   padding: 0 40rpx;
-  // }
-
-  // .ideaInfo {
-  //   display: flex;
-  //   flex-direction: column;
-  //   align-items: flex-start;
-  //   margin-bottom: 20rpx;
-
-  //   .ideaInfo-top {
-  //     display: flex;
-  //     align-items: center;
-  //     border: 1px solid black;
-  //     border-top-left-radius: 20rpx;
-  //     border-top-right-radius: 20rpx;
-  //     width: 100%;
-  //     padding: 20rpx;
-  //     background: rgba(110, 224, 244, 0.5);
-  //   }
-
-  //   .ideaInfo-bottom {
-  //     width: 100%;
-  //     padding: 20rpx;
-  //     border-left: 1px solid black;
-  //     border-right: 1px solid black;
-  //   }
-
-  //   .ideaInfo-feedback {
-  //     width: 100%;
-  //     text-align: right;
-  //     border-left: 1px solid black;
-  //     border-right: 1px solid black;
-  //     border-bottom: 1px solid black;
-  //     button {
-  //       display: inline-block;
-  //       font-size: 30rpx;
-  //       margin-right: 10rpx;
-  //     }
-  //   }
-
-  //   .ideaInfo-avatar {
-  //     width: 80rpx;
-  //     height: 80rpx;
-  //     border-radius: 50%;
-  //     border: 1px solid black;
-  //   }
-
-  //   .ideaInfo-nickname {
-  //     color: black;
-  //     padding-left: 20rpx;
-  //     font-size: 35rpx;
-  //   }
-  // }
-
-  // .reply {
-  //   width: 100%;
-  //   position: fixed;
-  //   bottom: 0;
-  //   left: 0;
-  //   display: block;
-  //   background: white;
-  //   border: 1px solid black;
-  // }
+  scroll-view {
+    margin-bottom: 50rpx;
+  }
 </style>
 
 <template>
   <view class="container">
-    <view>
+    <!-- <view>
       <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取信息权限 </button>
-    </view>
-    <detail :topic.sync="topic" :st.sync="st" @showToast.user="showToast"></detail>
+    </view> -->
+    <scroll-view scroll-y="true" style="height: 100%" bindscrolltolower="searchScrollLower" bindscroll="scroll">
+      <detail :topic.sync="topic" :st.sync="st" @showToast.user="showToast"></detail>
+    </scroll-view>
     <toast />
   </view>
 </template>
@@ -101,7 +23,6 @@
   import List from '../components/list' // aliasFields example
   import Group from '../components/group'
   import Toast from 'wepy-com-toast'
-  import testMixin from '../mixins/test'
   import AV from 'leancloud-storage'
   import api from '../utils/api'
   import Detail from '../components/detail'
@@ -116,7 +37,7 @@
   export default class Index extends wepy.page {
     config = {
       navigationBarTitleText: '编呗今日',
-      onReachBottomDistance: 50,
+      onReachBottomDistance: 20,
       enablePullDownRefresh: true,
       backgroundTextStyle: 'dark'
     }
@@ -131,27 +52,13 @@
       detail: Detail
     }
 
-    mixins = [testMixin]
-
     data = {
       topic: {},
-      // result: todayData,
-      // ideas: todayData.ideas[0] || [],
-      // topic: todayData.topic,
-      // versions: todayData.versions,
-      // preIdeaId: '',
+      // hasUserInfo: false,
+      st: '',
       userInfo: {
-        nickName: '加载中...'
-      },
-      hasUserInfo: false,
-      st: ''
-      // currentVersion: 0,
-      // isReplying: false,
-      // st: null, // sessionToken
-      // inputValue: '',
-      // isCheckout: false,
-      // isNew: false, // 全新版本，只有在第一个idea才会有
-      // sliceIndex: 0
+
+      }
     }
 
     computed = {
@@ -173,10 +80,9 @@
       }
     }
 
-    events = {
-      'index-emit': (...args) => {
-        let $event = args[args.length - 1]
-        console.log(`${this.$name} receive ${$event.name} from ${$event.source.$name}`)
+    computed = {
+      hasUserInfo () {
+        return this.$parent.globalData.hasUserInfo
       }
     }
 
@@ -193,6 +99,13 @@
       console.log('onReachBottom')
     }
 
+    onShareAppMessage () {
+      return {
+        title: this.topic.content,
+        path: 'pages/index'
+      }
+    }
+
     async login (userInfo) {
       try {
         let user = await AV.User.loginWithWeapp()
@@ -204,11 +117,11 @@
         let topic = await api.getFirstTopic()
         this.topic = topic.data
         this.$apply()
-        this.$broadcast('topicLoad')
+        // this.$broadcast('topicLoad')
       } catch (e) {
         console.error('login error', e)
         console.error(AV.User.current().getSessionToken())
-        this._showToast('发生错误，\n请在公众号留言')
+        this._showToast('登录出错，\n请在公众号留言')
       }
     }
 
@@ -218,21 +131,29 @@
 
     onLoad() {
       let that = this
-      wx.getSetting({
+      if (!this.hasUserInfo) {
+        wx.redirectTo({
+          url: 'auth'
+        })
+        return
+      }
+      wx.getUserInfo({
         success: function(res) {
-          if (res.authSetting['scope.userInfo']) {
-            wx.getUserInfo({
-              success: function(res) {
-                that.userInfo = res.userInfo
-                that.hasUserInfo = true
-                that.login(res.userInfo)
-                that.$parent.globalData.userInfo = res.userInfo
-                that.$apply()
-              }
-            })
-          }
+          that.userInfo = res.userInfo
+          that.hasUserInfo = true
+          that.login(res.userInfo)
+          that.$parent.globalData.userInfo = res.userInfo
+          that.$apply()
         }
       })
+    }
+
+    onHide() {
+      this.$invoke('detail', 'clearTimer')
+    }
+
+    onShow() {
+      this.$invoke('detail', 'fetchTimer')
     }
   }
 </script>

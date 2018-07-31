@@ -29,10 +29,15 @@ export default class Me extends wepy.page {
     hasUserInfo: false
   }
 
-  getUserInfo (e) {
+  async getUserInfo (e) {
     this.userInfo = e.detail.userInfo
     this.hasUserInfo = true
     this.$parent.globalData.userInfo = e.detail.userInfo
+    this.$parent.globalData.hasUserInfo = true
+    wx.setStorageSync("hasUserInfo", true)
+    wx.reLaunch({
+      url: 'index'
+    })
   }
   onLoad() {
 

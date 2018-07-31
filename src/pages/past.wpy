@@ -12,14 +12,14 @@
 
 </style>
 <template>
- <scroll-view>
+ <view>
     <repeat for="{{topics}}" key="index" index="index" item="topic">
       <view class="topic-wrap" @tap="tapTitle({{topic.objectId}})">
         <view class="topic-title">{{topic.content}}</view>
         <view class="topic-date">{{topic.createdAt}}</view>
       </view>
     </repeat>
-  </scroll-view>
+  </view>
 </template>
 
 <script>

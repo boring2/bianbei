@@ -84,11 +84,20 @@
   .hide {
     display: none !important;
   }
+  scroll-view {
+    margin-bottom: 50rpx;
+  }
+  .more {
+    color: #aaa;
+    text-align: center;
+    padding: 20rpx 0;
+    font-size: 30rpx;
+  }
 
 </style>
 
 <template>
-  <scroll-view id="scroll_content" @scrolltolower="searchScrollLower">
+  <view id="scroll_content">
     <view class="todayTitle">
       {{topic.content}}
     </view>
@@ -120,11 +129,12 @@
         </view>
       </repeat>
     </view>
+    <view wx:if="{{isPulling}}" class="more">正在拉取更多...</view>
     <view class="reply" wx:if="{{(isReplying || ideas.length === 0) && isReady}}">
       <input confirm-type="send" placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}" @confirm="send"/>
       <button @tap="send">发送</button>
     </view>
-  </scroll-view>
+  </view>
 </template>
 
 
@@ -155,7 +165,9 @@
       isCheckout: false,
       isNew: false, // 全新版本，只有在第一个idea才会有
       sliceIndex: 0,
-      isReady: false
+      isReady: false,
+      timer: null,
+      isPulling: false
     }
 
     methods = {
@@ -165,18 +177,23 @@
         if (currentVersionIdeas) {
           this.ideas = currentVersionIdeas
         } else {
+          wx.showLoading({
+            title: '正在加载...',
+            mask: true
+          })
           this.getCurrentVersionIdeas().then((ideas) => {
             console.log(ideas)
             todayData.ideas[num] = ideas
             this.ideas = ideas
             this.$apply()
+            wx.hideLoading()
           })
         }
       },
       handleFeedBtn (id, type, index) {
         api.handleFeed(id, type, this.st).then((res) => {
           if (res.data.code) {
-            this.$emit('showToast', res.data.msg)
+            this._errorHandle(res.data)
           } else {
             let list = this.ideas
             if (!list[index][type]) {
@@ -233,14 +250,14 @@
 
         api.postIdea(sendData, this.st).then((res) => {
           if (res.data.code) {
-            console.log(res.data.msg)
-            this._showToast(res.data.msg)
+            this._errorHandle(res.data)
           } else {
             console.log(res.data)
             let idea = res.data.idea
             let version = res.data.version
             res.data.user = {}
             idea.user.username = AV.User.current().get('username')
+            console.log(this.$parent)
             idea.user.avatarUrl = this.$parent.userInfo.avatarUrl
             if (isNew || isCheckout) {
               todayData.versions.push(version)
@@ -260,9 +277,25 @@
           console.log('add error', e)
         })
       },
+
       searchScrollLower () {
         console.log('aaaaaa')
       }
+    }
+
+    watch = {
+      topic (newValue, oldValue) {
+        if (newValue.objectId === oldValue.objectId) {
+          return
+        }
+        this.fetchTopicData()
+      }
+    }
+
+    _errorHandle (errData) {
+      // let code = errData.code
+      let msg = errData.msg
+      this.$emit('showToast', msg)
     }
 
     pageScrollToBottom () {
@@ -304,11 +337,17 @@
       return result
     }
 
-    async fetchTopicData () {
+    async fetchTopicData (notShowLoading) {
       if (!this.topic.objectId) {
         return
       }
       try {
+        if (!notShowLoading) {
+          wx.showLoading({
+            title: '正在加载...',
+            mask: true
+          })
+        }
         /// 设置topic
         let topic = this.topic
         todayData.topic = topic
@@ -322,29 +361,59 @@
           ideas = await this.getCurrentVersionIdeas()
         }
         todayData.ideas[0] = ideas
-        console.log('fetch', (this.isReplying || (this.ideas.length === 0)) && this.isReady)
         this.isReady = true
         this.syncData(todayData)
+        wx.hideLoading()
         wx.stopPullDownRefresh()
-        console.log('fetch2', (this.isReplying || (this.ideas.length === 0)) && this.isReady)
+        this.fetchTimer()
       } catch (e) {
+        wx.hideLoading()
         console.error('fetch data error', e)
       }
     }
 
     events = {
       topicLoad () {
-        console.log('----------event')
-        this.fetchTopicData()
+        this.isPulling = true
+        this.$apply()
+        this.fetchTopic()
       }
     }
 
-    onLoad () {
-      console.log('+++++', (this.isReplying || (this.ideas.length === 0)) && this.isReady)
+    fetchTopic () {
+      let currentVersion = this.versions[this.currentVersion]
+      let curVersionId = currentVersion.objectId
+      api.getVersionBaseInfo(curVersionId).then(versionInfo => {
+        if (versionInfo.data.updatedAt === currentVersion.updatedAt) {
+          this.fetchTimer()
+          setTimeout(() => {
+            this.isPulling = false
+            this.$apply()
+          }, 1000)
+        } else {
+          this.fetchTopicData(true).then(() => {
+            currentVersion.updatedAt = versionInfo.data.updatedAt
+            this.isPulling = false
+            this.$apply()
+            this.fetchTimer()
+          })
+        }
+      })
     }
 
-    onReady() {
-      console.log('-----', this.isReady)
+    fetchTimer () {
+      this.clearTimer()
+      // this.timer = setTimeout(() => {
+      //   console.log('fetch timer')
+      //   this.fetchTopic()
+      // }, 5000)
+    }
+
+    clearTimer () {
+      if (this.timer) {
+        clearTimeout(this.timer)
+        this.timer = null
+      }
     }
   }
 </script>

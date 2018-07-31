@@ -96,11 +96,15 @@ router.post('/', function (req, res, next) {
     AV.Promise.all([userPromise, versionPromise]).then(([user, version]) => {
       let userIdeas = []
       let ideas = version.get('ideas')
+      if (ideas.length > 50) {
+        throw new Error('该故事已经完结')
+      }
       ideas.forEach((idea) => {
         if (idea.get('user').id === user.id) {
           userIdeas.push(idea)
         }
       })
+
       if (userIdeas.length > limitLength - 1) {
         throw new Error('这个版本你已经贡献了5个想法了，请换一个版本试试。')
       } else {
@@ -247,7 +251,8 @@ function likeHander(type) {
       user.addUnique(userType, idea)
       idea.increment(type, 1)
       idea.fetchWhenSave = true
-      return user.save(null, {sessionToken: req.headers['x-lc-session']})
+
+      return user.save(null, {useMasterKey: true})
     }).then((result) => {
       res.send('success')
     }).catch((e) => {

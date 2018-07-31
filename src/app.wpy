@@ -56,7 +56,8 @@ export default class extends wepy.app {
 
   globalData = {
     userInfo: null,
-    st: ''
+    st: '',
+    hasUserInfo: false
   }
 
   constructor () {
@@ -65,7 +66,7 @@ export default class extends wepy.app {
   }
 
   onLaunch() {
-    // this.login()
+    this.globalData.hasUserInfo = wx.getStorageSync("hasUserInfo")
     this.initAV()
   }
 

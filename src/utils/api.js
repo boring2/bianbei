@@ -2,6 +2,7 @@ import wepy from 'wepy'
 
 // let domain = 'http://127.0.0.1:3000'
 let domain = 'https://bianbei.leanapp.cn'
+
 let url = {
   firstTopic: {
     url: `${domain}/topic/today`
@@ -10,7 +11,8 @@ let url = {
     url: `${domain}/topic`
   },
   version: {
-    url: `${domain}/version`
+    url: `${domain}/version`,
+    baseInfoUrl: `${domain}/version/base`
   },
   idea: {
     url: `${domain}/idea`
@@ -35,6 +37,10 @@ let api = {
 
   getVersion (id) {
     return wepy.request(`${url.version.url}/${id}`)
+  },
+
+  getVersionBaseInfo (id) {
+    return wepy.request(`${url.version.baseInfoUrl}/${id}`)
   },
 
   getIdea (id, session) {
