@@ -97,7 +97,7 @@
 </style>
 
 <template>
-  <view id="scroll_content">
+  <view>
     <view class="todayTitle">
       {{topic.content}}
     </view>
@@ -271,7 +271,7 @@
             }
             todayData.ideas[this.currentVersion].push(idea)
             this.syncData(todayData)
-            this.pageScrollToBottom()
+            this.$emit('addIdea')
           }
         }).catch((e) => {
           console.log('add error', e)
@@ -296,15 +296,6 @@
       // let code = errData.code
       let msg = errData.msg
       this.$emit('showToast', msg)
-    }
-
-    pageScrollToBottom () {
-      wx.createSelectorQuery().select('#scroll_content').boundingClientRect(function(rect) {
-        // 使页面滚动到底部
-        wx.pageScrollTo({
-          scrollTop: rect.bottom
-        })
-      }).exec()
     }
 
     syncData (data) {

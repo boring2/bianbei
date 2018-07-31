@@ -3,8 +3,8 @@
 </style>
 <template>
   <view class="container">
-    <scroll-view>
-      <detail :topic.sync="topic" :st.sync="st"></detail>
+    <scroll-view id="scroll_content2">
+      <detail :topic.sync="topic" :st.sync="st" @addIdea.user="pageScrollToBottom"></detail>
     </scroll-view>
   </view>
 </template>
@@ -33,6 +33,18 @@ export default class DetailPage extends wepy.page {
 
   components = {
     detail: Detail
+  }
+
+  methods = {
+    pageScrollToBottom () {
+      wx.createSelectorQuery().select('#scroll_content2').boundingClientRect(function(rect) {
+        // 使页面滚动到底部
+        console.log(rect)
+        wx.pageScrollTo({
+          scrollTop: -rect.top
+        })
+      }).exec()
+    }
   }
 
   onShareAppMessage () {
