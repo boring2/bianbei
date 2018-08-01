@@ -55,6 +55,10 @@ export default class DetailPage extends wepy.page {
   }
 
   onLoad(options) {
+    wx.showLoading({
+      title: '正在加载...',
+      mask: true
+    })
     this.userInfo = this.$parent.globalData.userInfo
     let id = options.id
     this.st = AV.User.current().getSessionToken()

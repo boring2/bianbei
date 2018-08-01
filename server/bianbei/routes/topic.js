@@ -31,6 +31,7 @@ router.get('/today', function(req, res, next) {
 router.get('/:id', function(req, res, next) {
   let id = req.params.id
   var query = new AV.Query(Topic)
+  query.include('versions')
   query.get(id).then((results) => {
     res.send(results)
   }).catch(next)
