@@ -182,7 +182,6 @@
             mask: true
           })
           this.getCurrentVersionIdeas().then((ideas) => {
-            console.log(ideas)
             todayData.ideas[num] = ideas
             this.ideas = ideas
             this.$apply()
@@ -307,17 +306,12 @@
 
     async getCurrentVersionIdeas () {
       wx.showNavigationBarLoading()
-      let ideas = []
       let currentVersion = this.currentVersion
       let versionId = todayData.versions[currentVersion].objectId
       let version = await api.getVersion(versionId)
-      let verionIdeas = version.data.ideas
-      for (let j = 0; j < verionIdeas.length; j++) {
-        let idea = await api.getIdea(verionIdeas[j].objectId, this.st)
-        ideas.push(idea)
-      }
+      let versionIdeas = version.data.ideas
       wx.hideNavigationBarLoading()
-      return this._resolveIdeas(ideas)
+      return versionIdeas
     }
 
     _resolveIdeas (ideas) {
