@@ -3,8 +3,10 @@ var router = require('express').Router()
 var AV = require('leanengine')
 var creator = require('../utils/creator')
 var aclGen = require('../utils/acl')
-const USER_ROLE_CONSTANT = require('../utils/constant').USER_ROLE_CONSTANT
-
+const USER_ROLE_CONSTANT = require('../utils/constant')
+.USER_ROLE_CONSTANT
+const { MyError } = require('../utils/myerror')
+console.log(MyError)
 var Topic = AV.Object.extend('Topic')
 
 router.get('/than3', function(req, res, next) {
@@ -59,7 +61,7 @@ router.post('/', function(req, res, next) {
   }).then(function(topic) {
     res.send(topic)
   }).catch((e) => {
-    res.send(e)
+    res.send(MyError(e.code, '新建主题出错'))
   })
 })
 
