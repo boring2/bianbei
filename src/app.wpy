@@ -1,9 +1,20 @@
 <style lang="less">
+page {
+  font-family: -apple-system, '微软雅黑';
+  font-weight: 200;
+  background-color: #fff;
+  height:100%;
+}
 view, text {
   word-break: break-all;
 }
 view {
   box-sizing: border-box;
+}
+
+.container {
+  background: rgb(245, 245, 245);
+  height: 100vh;
 }
 // .container {
 //   height: 100%;
@@ -31,9 +42,9 @@ export default class extends wepy.app {
     ],
     window: {
       backgroundTextStyle: 'light',
-      navigationBarBackgroundColor: '#fff',
-      navigationBarTitleText: 'WeChat',
-      navigationBarTextStyle: 'black'
+      navigationBarBackgroundColor: '#000',
+      navigationBarTitleText: '编呗',
+      navigationBarTextStyle: 'white'
     },
     tabBar: {
       'selectedColor': '#1296db',
@@ -66,7 +77,7 @@ export default class extends wepy.app {
   }
 
   onLaunch() {
-    this.globalData.hasUserInfo = wx.getStorageSync("hasUserInfo")
+    this.globalData.hasUserInfo = wx.getStorageSync('hasUserInfo')
     this.initAV()
   }
 

@@ -34,7 +34,7 @@ export default class Me extends wepy.page {
     this.hasUserInfo = true
     this.$parent.globalData.userInfo = e.detail.userInfo
     this.$parent.globalData.hasUserInfo = true
-    wx.setStorageSync("hasUserInfo", true)
+    wx.setStorageSync('hasUserInfo', true)
     wx.reLaunch({
       url: 'index'
     })

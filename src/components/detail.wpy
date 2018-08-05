@@ -1,77 +1,72 @@
 <style lang="less">
-.todayTitle {
-    font-size: 50rpx;
-    text-align: center;
+  @border-color: rgb(220, 220, 220);
+  .todayTitle {
+    font-size: 40rpx;
     padding: 20rpx;
+    padding-top: 100rpx;
+    background: #000;
+    color: #fff;
   }
 
   .version-btns {
     width: 100%;
     display: flex;
-    margin: 40rpx 0;
     justify-content: center;
-    padding: 0 20rpx;
+    border-bottom: 1px solid @border-color;
     .version-btn {
       display: inline-block;
       font-size: 30rpx;
+      background: none;
+      padding: 15rpx 0;
+      margin: 0 30rpx;
+      width: 100%;
+      border-radius: 0;
+      &::after {
+        border: none;
+      }
+      &.active {
+        border-bottom: 8rpx solid #000;
+      }
     }
-  }
-
-  .idea-view {
-    padding: 0 40rpx;
   }
 
   .ideaInfo {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    margin-bottom: 20rpx;
-
-    .ideaInfo-top {
-      display: flex;
-      align-items: center;
-      border: 1px solid black;
-      border-top-left-radius: 20rpx;
-      border-top-right-radius: 20rpx;
-      width: 100%;
-      padding: 20rpx;
-      background: rgba(110, 224, 244, 0.5);
-    }
 
     .ideaInfo-bottom {
+      display: flex;
       width: 100%;
-      padding: 20rpx;
-      border-left: 1px solid black;
-      border-right: 1px solid black;
-    }
-
-    .ideaInfo-feedback {
-      width: 100%;
-      text-align: right;
-      border-left: 1px solid black;
-      border-right: 1px solid black;
-      border-bottom: 1px solid black;
-      button {
-        display: inline-block;
-        font-size: 30rpx;
-        margin-right: 10rpx;
+      padding: 30rpx;
+      font-size: 35rpx;
+      font-weight: 300;
+      .floor-number {
+        width: 10%;
+        color: rgb(211, 211, 211);
+      }
+      .ideaInfo-content {
+        padding-left: 20rpx;
+        width: 90%;
+        text-shadow: 1rpx 1rpx 1rpx rgba(0, 0, 0, 0.3);
       }
     }
-
-    .ideaInfo-avatar {
-      width: 80rpx;
-      height: 80rpx;
-      border-radius: 50%;
-      border: 1px solid black;
+    .ideaInfo-line {
+      margin-left: 50rpx;
+      width: 100%;
+      border-top: 1px solid  @border-color;
     }
 
-    .ideaInfo-nickname {
-      color: black;
-      padding-left: 20rpx;
-      font-size: 35rpx;
-    }
   }
 
+  .btn-new {
+    margin-top: 50rpx;
+    width: 90%;
+    overflow: initial;
+    &::after {
+      border: 1px dashed #000 !important;
+    }
+  }
   .reply {
     width: 100%;
     position: fixed;
@@ -93,6 +88,9 @@
     padding: 20rpx 0;
     font-size: 30rpx;
   }
+  .view-hover-class {
+    background: red;
+  }
 
 </style>
 
@@ -103,32 +101,37 @@
     </view>
     <view wx:if="{{versions.length > 1}}" class="version-btns">
       <repeat for="{{versions}}" key="index" index="index" item="versionNum">
-        <button class="version-btn" @tap="changeVersion({{index}})">故事 {{index + 1}}</button>
+        <button class="version-btn {{currentVersionNum === index ? 'active' : ''}}" @tap="changeVersion({{index}})">故事 {{index + 1}}</button>
       </repeat>
     </view>
     <view class="idea-view">
       <repeat for="{{ideas}}" key="index" index="index" item="idea">
         <view class="ideaInfo">
-          <view class="ideaInfo-top">
+          <!-- <view class="ideaInfo-top">
             <image class="ideaInfo-avatar" src="{{ idea.user.avatarUrl }}" background-size="cover"/>
             <view class="ideaInfo-nickname">{{ idea.user.username }}</view>
-          </view>
+          </view> -->
 
-          <view class="ideaInfo-bottom">
+          <view class="ideaInfo-bottom" @tap="showActionSheet" hover-class="view-hover-class">
+            <text class="floor-number" wx:if="{{index < 10}}">#{{'0' + (index + 1)}}</text>
+            <text class="floor-number" wx:else>#{{ index + 1 }}</text>
             <text class="ideaInfo-content">{{ idea.content }}</text>
           </view>
+          <view class="ideaInfo-line"></view>
 
-          <view class="ideaInfo-feedback">
+          <!-- <view class="ideaInfo-feedback">
             <button @tap="handleFeedBtn({{idea.objectId}}, 'like', {{index}})">赞 {{ idea.like }}</button>
             <button @tap="handleFeedBtn({{idea.objectId}}, 'unlike', {{index}})">踩 {{ idea.unlike }}</button>
             <button @tap="handleFeedBtn({{idea.objectId}}, 'report', {{index}})">举报 {{ idea.report }}</button>
             <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 0)" class="{{index !== (ideas.length - 1) ? 'hide' : ''}}">回复</button>
             <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 1)" class="{{(index === 0 && versions.length < 3) ? '' : 'hide'}}">新故事</button>
             <button @tap="handleReply({{idea.objectId}}, 1, {{index}}), 0" class="{{(versions.length >= 3 || index === (ideas.length - 1)) ? 'hide' : ''}}">切分支</button>
-          </view>
+          </view> -->
         </view>
       </repeat>
+      <button class="btn-new" @tap="handleReply(null, 0, 0))">新剧情</button>
     </view>
+
     <view wx:if="{{isPulling}}" class="more">正在拉取更多...</view>
     <view class="reply" wx:if="{{(isReplying || ideas.length === 0) && isReady}}">
       <input confirm-type="send" placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}" @confirm="send"/>
@@ -158,30 +161,36 @@
       versions: todayData.versions,
       ideas: todayData.ideas[0] || [],
       preIdeaId: '',
-      currentVersion: 0,
+      currentVersionNum: 0,
       isReplying: false,
       st: null, // sessionToken
       inputValue: '',
       isCheckout: false,
-      isNew: false, // 全新版本，只有在第一个idea才会有
+      isNewVersion: false, // 全新版本，只有在第一个idea才会有
       sliceIndex: 0,
       isReady: false,
       timer: null,
       isPulling: false
     }
 
+    computed = {
+      currentVersion () {
+        return this.versions[this.currentVersionNum] || []
+      }
+    }
+
     methods = {
       changeVersion (num, e) {
-        this.currentVersion = num
-        let currentVersionIdeas = todayData.ideas[num]
-        if (currentVersionIdeas) {
-          this.ideas = currentVersionIdeas
+        this.currentVersionNum = num
+        let currentVersionNumIdeas = todayData.ideas[num]
+        if (currentVersionNumIdeas) {
+          this.ideas = currentVersionNumIdeas
         } else {
           wx.showLoading({
             title: '正在加载...',
             mask: true
           })
-          this.getCurrentVersionIdeas().then((ideas) => {
+          this.getCurrentVersionNumIdeas().then((ideas) => {
             todayData.ideas[num] = ideas
             this.ideas = ideas
             this.$apply()
@@ -204,13 +213,17 @@
           }
         })
       },
-      handleReply (id, isCheckout, sliceIndex, isNew, e) {
+      handleReply (id, isCheckout, isNewVersion, e) {
+        let lastId = null
+        if (this.ideas.length) {
+          lastId = this.ideas[this.ideas.length - 1].objectId
+        }
+        id = id === 'null' ? null : id
+        this.preIdeaId = id || lastId
         this.isReplying = true
-        this.preIdeaId = id
         this.isCheckout = parseInt(isCheckout) === 1
-        this.sliceIndex = sliceIndex
-        this.isNew = parseInt(isNew) === 1
-        console.log(isCheckout)
+        this.isNewVersion = parseInt(isNewVersion) === 1
+        // console.log(isCheckout)
       },
       finishEnter (e) {
         this.isReplying = false
@@ -223,7 +236,7 @@
         this.isReplying = false
         let inputValue = this.inputValue
         const isCheckout = this.isCheckout
-        const isNew = this.isNew || this.ideas.length === 0
+        const isNewVersion = this.isNewVersion || this.ideas.length === 0
         this.inputValue = ''
 
         if (!inputValue.trim()) {
@@ -240,9 +253,9 @@
 
         /// 如果是checkout并且只有一条idea，就不需要下面数据
         /// (this.isCheckout && this.sliceIndex === 0) 的相反是 (!this.isCheckout || this.sliceIndex !== 0)
-        if (!isNew) {
+        if (!isNewVersion) {
           sendData = Object.assign(sendData, {
-            versionId: this.versions[this.currentVersion].objectId,
+            versionId: this.versions[this.currentVersionNum].objectId,
             preIdeaId: this.preIdeaId
           })
         }
@@ -258,17 +271,17 @@
             idea.user.username = AV.User.current().get('username')
             console.log(this.$parent)
             idea.user.avatarUrl = this.$parent.userInfo.avatarUrl
-            if (isNew || isCheckout) {
+            if (isNewVersion || isCheckout) {
               todayData.versions.push(version)
-              this.currentVersion = todayData.versions.length - 1
-              if (isNew) {
-                todayData.ideas[this.currentVersion] = []
+              this.currentVersionNum = todayData.versions.length - 1
+              if (isNewVersion) {
+                todayData.ideas[this.currentVersionNum] = []
               } else {
                 let sliceIdea = this.ideas.slice(0, this.sliceIndex + 1)
-                todayData.ideas[this.currentVersion] = sliceIdea
+                todayData.ideas[this.currentVersionNum] = sliceIdea
               }
             }
-            todayData.ideas[this.currentVersion].push(idea)
+            todayData.ideas[this.currentVersionNum].push(idea)
             this.syncData(todayData)
             this.$emit('addIdea')
           }
@@ -279,6 +292,18 @@
 
       searchScrollLower () {
         console.log('aaaaaa')
+      },
+
+      showActionSheet () {
+        wx.showActionSheet({
+          itemList: ['赞', '创作新分支故事', '删除', '举报'],
+          success: function(res) {
+            console.log(res.tapIndex)
+          },
+          fail: function(res) {
+            console.log(res.errMsg)
+          }
+        })
       }
     }
 
@@ -300,14 +325,14 @@
     syncData (data) {
       this.topic = data.topic
       this.versions = data.versions
-      this.ideas = data.ideas[this.currentVersion] || []
+      this.ideas = data.ideas[this.currentVersionNum] || []
       this.$apply()
     }
 
-    async getCurrentVersionIdeas () {
+    async getCurrentVersionNumIdeas () {
       wx.showNavigationBarLoading()
-      let currentVersion = this.currentVersion
-      let versionId = todayData.versions[currentVersion].objectId
+      let currentVersionNum = this.currentVersionNum
+      let versionId = todayData.versions[currentVersionNum].objectId
       let version = await api.getVersion(versionId)
       let versionIdeas = version.data.ideas
       wx.hideNavigationBarLoading()
@@ -343,7 +368,7 @@
         /// 设置ideas
         let ideas = []
         if (versions.length) {
-          ideas = await this.getCurrentVersionIdeas()
+          ideas = await this.getCurrentVersionNumIdeas()
         }
         todayData.ideas[0] = ideas
         this.isReady = true
@@ -366,10 +391,11 @@
     }
 
     fetchTopic () {
-      let currentVersion = this.versions[this.currentVersion]
-      let curVersionId = currentVersion.objectId
+      let currentVersionNum = this.versions[this.currentVersionNum]
+      let curVersionId = currentVersionNum.objectId
       api.getVersionBaseInfo(curVersionId).then(versionInfo => {
-        if (versionInfo.data.updatedAt === currentVersion.updatedAt) {
+        if (versionInfo.data.updatedAt === currentVersionNum.updatedAt) {
+          wx.stopPullDownRefresh()
           this.fetchTimer()
           setTimeout(() => {
             this.isPulling = false
@@ -377,7 +403,8 @@
           }, 1000)
         } else {
           this.fetchTopicData(true).then(() => {
-            currentVersion.updatedAt = versionInfo.data.updatedAt
+            wx.stopPullDownRefresh()
+            currentVersionNum.updatedAt = versionInfo.data.updatedAt
             this.isPulling = false
             this.$apply()
             this.fetchTimer()

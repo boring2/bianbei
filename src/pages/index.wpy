@@ -9,7 +9,7 @@
     <!-- <view>
       <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取信息权限 </button>
     </view> -->
-    <scroll-view id="scroll_content">
+    <scroll-view scroll-y id="scroll_content">
       <detail :topic.sync="topic" :st.sync="st" @showToast.user="showToast" @addIdea.user="pageScrollToBottom"></detail>
     </scroll-view>
     <toast />
@@ -98,7 +98,7 @@
 
     onPullDownRefresh () {
       if (!this.hasUserInfo) {
-        wx.hideNavigationBarLoading()
+        wx.stopPullDownRefresh()
       }
       console.log('onPullDownRefresh')
       this.$broadcast('topicLoad')
