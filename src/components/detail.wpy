@@ -42,13 +42,12 @@
       font-size: 35rpx;
       font-weight: 300;
       .floor-number {
-        width: 10%;
+        width: 15%;
         color: rgb(211, 211, 211);
       }
       .ideaInfo-content {
-        padding-left: 20rpx;
-        width: 90%;
-        text-shadow: 1rpx 1rpx 1rpx rgba(0, 0, 0, 0.3);
+        width: 85%;
+        text-shadow: 2rpx 2rpx 8rpx rgba(0, 0, 0, 0.3);
       }
     }
     .ideaInfo-line {
@@ -59,14 +58,21 @@
 
   }
 
-  .btn-new {
-    margin-top: 50rpx;
-    width: 90%;
-    overflow: initial;
-    &::after {
-      border: 1px dashed #000 !important;
+  .btn-new-wrap {
+    text-align: center;
+    .btn-new {
+      display: inline-block;
+      margin: 50rpx 0;
+      width: 90%;
+      overflow: initial;
+      color: rgb(19, 122, 216);
+      background: white;
+      &::after {
+        border: 1px dashed #000 !important;
+      }
     }
   }
+
   .reply {
     width: 100%;
     position: fixed;
@@ -79,9 +85,6 @@
   .hide {
     display: none !important;
   }
-  scroll-view {
-    margin-bottom: 50rpx;
-  }
   .more {
     color: #aaa;
     text-align: center;
@@ -89,7 +92,7 @@
     font-size: 30rpx;
   }
   .view-hover-class {
-    background: red;
+    background: rgb(188, 229, 255);
   }
 
 </style>
@@ -113,7 +116,7 @@
           </view> -->
 
           <view class="ideaInfo-bottom" @tap="showActionSheet" hover-class="view-hover-class">
-            <text class="floor-number" wx:if="{{index < 10}}">#{{'0' + (index + 1)}}</text>
+            <text class="floor-number" wx:if="{{index < 9}}">#{{'0' + (index + 1)}}</text>
             <text class="floor-number" wx:else>#{{ index + 1 }}</text>
             <text class="ideaInfo-content">{{ idea.content }}</text>
           </view>
@@ -129,10 +132,11 @@
           </view> -->
         </view>
       </repeat>
+    </view>
+    <view class="btn-new-wrap">
       <button class="btn-new" @tap="handleReply(null, 0, 0))">新剧情</button>
     </view>
-
-    <view wx:if="{{isPulling}}" class="more">正在拉取更多...</view>
+    <!-- <view wx:if="{{isPulling}}" class="more">正在拉取更多...</view> -->
     <view class="reply" wx:if="{{(isReplying || ideas.length === 0) && isReady}}">
       <input confirm-type="send" placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}" @confirm="send"/>
       <button @tap="send">发送</button>
@@ -391,10 +395,12 @@
     }
 
     fetchTopic () {
+      wx.showNavigationBarLoading()
       let currentVersionNum = this.versions[this.currentVersionNum]
       let curVersionId = currentVersionNum.objectId
       api.getVersionBaseInfo(curVersionId).then(versionInfo => {
         if (versionInfo.data.updatedAt === currentVersionNum.updatedAt) {
+          wx.hideNavigationBarLoading()
           wx.stopPullDownRefresh()
           this.fetchTimer()
           setTimeout(() => {
@@ -404,6 +410,7 @@
         } else {
           this.fetchTopicData(true).then(() => {
             wx.stopPullDownRefresh()
+            wx.hideNavigationBarLoading()
             currentVersionNum.updatedAt = versionInfo.data.updatedAt
             this.isPulling = false
             this.$apply()
