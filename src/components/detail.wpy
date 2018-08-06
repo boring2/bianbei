@@ -82,6 +82,10 @@
     display: block;
     background: white;
     border: 1px solid black;
+    input {
+      height: 80rpx;
+      padding: 20rpx;
+    }
   }
   .hide {
     display: none !important;
@@ -124,9 +128,8 @@
       <button class="btn-new" @tap="handleReply(null, 0, 0))">新剧情</button>
     </view>
     <!-- <view wx:if="{{isPulling}}" class="more">正在拉取更多...</view> -->
-    <view class="reply {{(isReplying || ideas.length === 0) && isReady ? '': 'hide'}}">
-      <input confirm-type="send" placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}" @confirm="send"/>
-      <button @tap="send">发送</button>
+    <view class="reply {{isReplying && isReady ? '': 'hide'}}">
+      <input confirm-type="send" placeholder="开始你的创作..." focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}" @confirm="send"/>
     </view>
   </view>
 </template>
@@ -238,7 +241,14 @@
           })
         }
 
-        api.postIdea(sendData, this.st).then((res) => {
+        let st = wx.getStorageSync('st')
+
+        wx.showLoading({
+          title: '创作传输中...',
+          mask: false
+        })
+        api.postIdea(sendData, st).then((res) => {
+          wx.hideLoading()
           if (res.data.code) {
             this._errorHandle(res.data)
           } else {
@@ -286,7 +296,7 @@
         })
 
         let arr = [arrMap[0]]
-        if (this.versions.length < 3) {
+        if (this.versions.length < 3 && ideaIndex !== this.ideas.length - 1) {
           arr.push(arrMap[1])
         }
         console.log(this.ideas[ideaIndex].user.objectId, AV.User.current().id)
@@ -312,6 +322,10 @@
             console.log('创作新分支', ideaId)
           },
           2: function () {
+            wx.showToast({
+              title: '暂不支持删除',
+              icon: 'none'
+            })
             console.log('删除')
           },
           3: function () {
@@ -334,7 +348,7 @@
 
     watch = {
       topic (newValue, oldValue) {
-        if (newValue.objectId === oldValue.objectId) {
+        if (newValue.objectId === oldValue.objectId && newValue.versions.length === oldValue.versions.length) {
           return
         }
         this.fetchTopicData()
@@ -342,7 +356,8 @@
     }
 
     handleFeedBtn (id, type, index) {
-      api.handleFeed(id, type, this.st).then((res) => {
+      let st = wx.getStorageSync('st')
+      api.handleFeed(id, type, st).then((res) => {
         if (res.data.code) {
           this._errorHandle(res.data)
         } else {
@@ -445,24 +460,30 @@
 
     fetchTopic () {
       wx.showNavigationBarLoading()
-      let currentVersionNum = this.versions[this.currentVersionNum]
-      let curVersionId = currentVersionNum.objectId
+      let currentVersion = this.versions[this.currentVersionNum]
+      if (!currentVersion) {
+        api.getFirstTopic().then(topic => {
+          wx.hideNavigationBarLoading()
+          wx.stopPullDownRefresh()
+          this.topic = topic.data
+          this.versions = topic.data.versions
+          console.log(this.versions)
+          this.$apply()
+          this.fetchTimer()
+        })
+        return
+      }
+      let curVersionId = currentVersion.objectId
       api.getVersionBaseInfo(curVersionId).then(versionInfo => {
-        if (versionInfo.data.updatedAt === currentVersionNum.updatedAt) {
+        if (versionInfo.data.updatedAt === currentVersion.updatedAt) {
           wx.hideNavigationBarLoading()
           wx.stopPullDownRefresh()
           this.fetchTimer()
-          setTimeout(() => {
-            this.isPulling = false
-            this.$apply()
-          }, 1000)
         } else {
           this.fetchTopicData(true).then(() => {
             wx.stopPullDownRefresh()
             wx.hideNavigationBarLoading()
-            currentVersionNum.updatedAt = versionInfo.data.updatedAt
-            this.isPulling = false
-            this.$apply()
+            currentVersion.updatedAt = versionInfo.data.updatedAt
             this.fetchTimer()
           })
         }

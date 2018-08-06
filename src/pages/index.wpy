@@ -39,7 +39,7 @@
   export default class Index extends wepy.page {
     config = {
       navigationBarTitleText: '编呗今日',
-      onReachBottomDistance: 20,
+      onReachBottomDistance: 0,
       enablePullDownRefresh: true,
       backgroundTextStyle: 'dark'
     }
@@ -88,7 +88,7 @@
           // 使页面滚动到底部
           console.log(rect)
           wx.pageScrollTo({
-            scrollTop: -rect.top
+            scrollTop: rect.height
           })
         }).exec()
       }
@@ -102,7 +102,10 @@
 
     async login () {
       try {
-        await this.mixinLogin('index')
+        let login = await this.mixinLogin('index')
+        if (!login) {
+          return
+        }
         let topic = await api.getFirstTopic()
         this.topic = topic.data
         this.$apply()

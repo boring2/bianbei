@@ -91,7 +91,7 @@ router.post('/', function (req, res, next) {
     let versionPromise = versionQuery.get(versionId, {
       sessionToken
     })
-    let limitLength = 15
+    let limitLength = 20
     /// 一个用户对一个topic的一个版本只能发言5次
     AV.Promise.all([userPromise, versionPromise]).then(([user, version]) => {
       let userIdeas = []
@@ -116,11 +116,11 @@ router.post('/', function (req, res, next) {
               let idea = creator.createIdea(topic, content, user)
               preIdea.addUnique('nextIdeas', idea)
               version.add('ideas', idea)
-              return preIdea.save(null, {
-                useMasterKey: true
+              return version.save(null, {
+                sessionToken
               }).then(() => {
-                return version.save(null, {
-                  sessionToken
+                return preIdea.save(null, {
+                  useMasterKey: true
                 })
               }).then(() => {
                 res.send({idea})

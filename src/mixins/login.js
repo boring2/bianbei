@@ -1,7 +1,6 @@
 import wepy from 'wepy';
 import api from '../utils/api'
 import AV from 'leancloud-storage'
-
 export default class LoginMixin extends wepy.mixin {
   async mixinLogin (fromUrl) {
     if (!wx.getStorageSync('hasUserInfo')) {
@@ -21,5 +20,6 @@ export default class LoginMixin extends wepy.mixin {
         await user.set(userInfo).save()
       }
     }
+    return st
   }
 }

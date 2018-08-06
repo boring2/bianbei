@@ -1,7 +1,7 @@
 import wepy from 'wepy'
 
-let domain = 'http://127.0.0.1:3000'
-// let domain = 'https://bianbei.leanapp.cn'
+// let domain = 'http://127.0.0.1:3000'
+let domain = 'https://bianbei.leanapp.cn'
 
 let url = {
   firstTopic: {

@@ -1,0 +1,41 @@
+<style lang="less" scoped>
+  @border-color: rgb(245, 245, 245);
+  .container {
+    padding: 50rpx;
+  }
+  .title {
+    font-weight: bold;
+    font-size: 50rpx;
+    margin-bottom: 20rpx;
+  }
+  .content {
+    text {
+      line-height: 2;
+    }
+  }
+</style>
+<template>
+  <view class="container">
+    <view class="title">
+      <text>我们的约定</text>
+    </view>
+    <view class="content">
+      <text>1.莫谈政治
+        2.禁止黄暴
+        3.和谐发帖
+        4.我们尊重大家的知识产权
+        5.我们有你的帖子的使用权
+      </text>
+    </view>
+  </view>
+</template>
+
+<script>
+
+import wepy from 'wepy'
+export default class Pro extends wepy.page {
+  onLoad() {
+
+  }
+}
+</script>

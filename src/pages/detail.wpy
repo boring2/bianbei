@@ -21,7 +21,7 @@ export default class DetailPage extends wepy.page {
 
   config = {
     navigationBarTitleText: '编呗历史',
-    onReachBottomDistance: 20,
+    onReachBottomDistance: 0,
     enablePullDownRefresh: true,
     backgroundTextStyle: 'dark'
   }
@@ -44,7 +44,7 @@ export default class DetailPage extends wepy.page {
         // 使页面滚动到底部
         console.log(rect)
         wx.pageScrollTo({
-          scrollTop: -rect.top
+          scrollTop: rect.height
         })
       }).exec()
     }
