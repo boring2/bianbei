@@ -21,6 +21,7 @@
       margin: 0 30rpx;
       width: 100%;
       border-radius: 0;
+      font-weight: 400;
       &::after {
         border: none;
       }
@@ -35,7 +36,7 @@
     flex-direction: column;
     align-items: flex-start;
 
-    .ideaInfo-bottom {
+    .ideaInfo-wrap {
       display: flex;
       width: 100%;
       padding: 30rpx;
@@ -110,26 +111,12 @@
     <view class="idea-view">
       <repeat for="{{ideas}}" key="index" index="index" item="idea">
         <view class="ideaInfo">
-          <!-- <view class="ideaInfo-top">
-            <image class="ideaInfo-avatar" src="{{ idea.user.avatarUrl }}" background-size="cover"/>
-            <view class="ideaInfo-nickname">{{ idea.user.username }}</view>
-          </view> -->
-
-          <view class="ideaInfo-bottom" @tap="showActionSheet" hover-class="view-hover-class">
+          <view class="ideaInfo-wrap" @tap="showActionSheet({{idea.objectId}}, {{index}})" hover-class="view-hover-class">
             <text class="floor-number" wx:if="{{index < 9}}">#{{'0' + (index + 1)}}</text>
             <text class="floor-number" wx:else>#{{ index + 1 }}</text>
             <text class="ideaInfo-content">{{ idea.content }}</text>
           </view>
           <view class="ideaInfo-line"></view>
-
-          <!-- <view class="ideaInfo-feedback">
-            <button @tap="handleFeedBtn({{idea.objectId}}, 'like', {{index}})">赞 {{ idea.like }}</button>
-            <button @tap="handleFeedBtn({{idea.objectId}}, 'unlike', {{index}})">踩 {{ idea.unlike }}</button>
-            <button @tap="handleFeedBtn({{idea.objectId}}, 'report', {{index}})">举报 {{ idea.report }}</button>
-            <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 0)" class="{{index !== (ideas.length - 1) ? 'hide' : ''}}">回复</button>
-            <button @tap="handleReply({{idea.objectId}}, 0, {{index}}, 1)" class="{{(index === 0 && versions.length < 3) ? '' : 'hide'}}">新故事</button>
-            <button @tap="handleReply({{idea.objectId}}, 1, {{index}}), 0" class="{{(versions.length >= 3 || index === (ideas.length - 1)) ? 'hide' : ''}}">切分支</button>
-          </view> -->
         </view>
       </repeat>
     </view>
@@ -137,7 +124,7 @@
       <button class="btn-new" @tap="handleReply(null, 0, 0))">新剧情</button>
     </view>
     <!-- <view wx:if="{{isPulling}}" class="more">正在拉取更多...</view> -->
-    <view class="reply" wx:if="{{(isReplying || ideas.length === 0) && isReady}}">
+    <view class="reply {{(isReplying || ideas.length === 0) && isReady ? '': 'hide'}}">
       <input confirm-type="send" placeholder="请输入你回复" focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}" @confirm="send"/>
       <button @tap="send">发送</button>
     </view>
@@ -149,6 +136,7 @@
   import wepy from 'wepy'
   import api from '../utils/api'
   import AV from 'leancloud-storage'
+  import errorHandler from '../utils/error'
 
   let todayData = {
     topic: {},
@@ -202,21 +190,6 @@
           })
         }
       },
-      handleFeedBtn (id, type, index) {
-        api.handleFeed(id, type, this.st).then((res) => {
-          if (res.data.code) {
-            this._errorHandle(res.data)
-          } else {
-            let list = this.ideas
-            if (!list[index][type]) {
-              list[index][type] = 1
-            } else {
-              list[index][type] += 1
-            }
-            this.$apply()
-          }
-        })
-      },
       handleReply (id, isCheckout, isNewVersion, e) {
         let lastId = null
         if (this.ideas.length) {
@@ -227,6 +200,7 @@
         this.isReplying = true
         this.isCheckout = parseInt(isCheckout) === 1
         this.isNewVersion = parseInt(isNewVersion) === 1
+        this.$apply()
         // console.log(isCheckout)
       },
       finishEnter (e) {
@@ -271,10 +245,10 @@
             console.log(res.data)
             let idea = res.data.idea
             let version = res.data.version
-            res.data.user = {}
-            idea.user.username = AV.User.current().get('username')
-            console.log(this.$parent)
-            idea.user.avatarUrl = this.$parent.userInfo.avatarUrl
+            // res.data.user = {}
+            // idea.user.username = AV.User.current().get('username')
+            // console.log(this.$parent)
+            // idea.user.avatarUrl = this.$parent.userInfo.avatarUrl
             if (isNewVersion || isCheckout) {
               todayData.versions.push(version)
               this.currentVersionNum = todayData.versions.length - 1
@@ -291,6 +265,7 @@
           }
         }).catch((e) => {
           console.log('add error', e)
+          errorHandler(e)
         })
       },
 
@@ -298,10 +273,56 @@
         console.log('aaaaaa')
       },
 
-      showActionSheet () {
+      showActionSheet (ideaId, ideaIndex) {
+        let arrMap = {
+          0: `赞(👏${this.ideas[ideaIndex].like || 0})`,
+          1: '创作新分支',
+          2: '删除',
+          3: '举报'
+        }
+        let reverseMap = {}
+        Object.keys(arrMap).forEach((key, index) => {
+          reverseMap[arrMap[key]] = index
+        })
+
+        let arr = [arrMap[0]]
+        if (this.versions.length < 3) {
+          arr.push(arrMap[1])
+        }
+        console.log(this.ideas[ideaIndex].user.objectId, AV.User.current().id)
+        if (this.ideas[ideaIndex].user.objectId === AV.User.current().id) {
+          arr.push(arrMap[2])
+        }
+
+        arr.push(arrMap[3])
+
+        let handlerNums = arr.map(element => {
+          return reverseMap[element]
+        })
+
+        let that = this
+        let handler = {
+          0: function () {
+            that.handleFeedBtn(ideaId, 'like', ideaIndex)
+            console.log('点赞')
+          },
+          1: function () {
+            that.sliceIndex = ideaIndex
+            that.methods['handleReply'].call(that, ideaId, 1, 0)
+            console.log('创作新分支', ideaId)
+          },
+          2: function () {
+            console.log('删除')
+          },
+          3: function () {
+            that.handleFeedBtn(ideaId, 'report', ideaIndex)
+            console.log('举报')
+          }
+        }
         wx.showActionSheet({
-          itemList: ['赞', '创作新分支故事', '删除', '举报'],
+          itemList: arr,
           success: function(res) {
+            handler[handlerNums[res.tapIndex]]()
             console.log(res.tapIndex)
           },
           fail: function(res) {
@@ -320,6 +341,35 @@
       }
     }
 
+    handleFeedBtn (id, type, index) {
+      api.handleFeed(id, type, this.st).then((res) => {
+        if (res.data.code) {
+          this._errorHandle(res.data)
+        } else {
+          if (type === 'like') {
+            wx.showToast({
+              title: '点赞成功',
+              icon: 'success',
+              duration: 1000
+            })
+          } else if (type === 'report') {
+            wx.showToast({
+              title: '感谢你的举报, 我们会及时审查',
+              icon: 'none',
+              duration: 2000
+            })
+          }
+          let list = this.ideas
+          if (!list[index][type]) {
+            list[index][type] = 1
+          } else {
+            list[index][type] += 1
+          }
+          this.$apply()
+        }
+      })
+    }
+
     _errorHandle (errData) {
       // let code = errData.code
       let msg = errData.msg
@@ -334,7 +384,6 @@
     }
 
     async getCurrentVersionNumIdeas () {
-      wx.showNavigationBarLoading()
       let currentVersionNum = this.currentVersionNum
       let versionId = todayData.versions[currentVersionNum].objectId
       let version = await api.getVersion(versionId)
@@ -381,7 +430,7 @@
         wx.stopPullDownRefresh()
         this.fetchTimer()
       } catch (e) {
-        wx.hideLoading()
+        errorHandler(e)
         console.error('fetch data error', e)
       }
     }

@@ -32,8 +32,8 @@ import AV from 'leancloud-storage'
 export default class extends wepy.app {
   config = {
     pages: [
-      'pages/index',
       'pages/past',
+      'pages/index',
       'pages/me',
       'pages/detail',
       'pages/auth'
@@ -53,7 +53,7 @@ export default class extends wepy.app {
         },
         {
           'pagePath': 'pages/past',
-          'text': '过往'
+          'text': '历史'
         },
         {
           'pagePath': 'pages/me',
@@ -72,6 +72,13 @@ export default class extends wepy.app {
   constructor () {
     super()
     this.use('promisify')
+    // 拦截request请求
+    this.intercept('request', {
+      fail (p) {
+        console.log('request fail: ', p)
+        return p
+      }
+    })
   }
 
   onLaunch() {

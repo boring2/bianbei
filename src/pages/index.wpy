@@ -26,6 +26,8 @@
   import AV from 'leancloud-storage'
   import api from '../utils/api'
   import Detail from '../components/detail'
+  import LoginMixin from '../mixins/login'
+  import errorHandler from '../utils/error'
   // import LocalStorage from '../utils/localstorage'
 
   // let todayData = {
@@ -52,6 +54,8 @@
       detail: Detail
     }
 
+    mixins = [LoginMixin]
+
     data = {
       topic: {},
       // hasUserInfo: false,
@@ -65,13 +69,13 @@
     }
 
     methods = {
-      getUserInfo: function(e) {
-        this.userInfo = e.detail.userInfo
-        this.hasUserInfo = true
-        this.$parent.globalData.userInfo = e.detail.userInfo
-        console.log(e.detail.userInfo)
-        this.login(this.userInfo)
-      },
+      // getUserInfo: function(e) {
+      //   this.userInfo = e.detail.userInfo
+      //   this.hasUserInfo = true
+      //   this.$parent.globalData.userInfo = e.detail.userInfo
+      //   console.log(e.detail.userInfo)
+      //   this.login(this.userInfo)
+      // },
 
       showToast (title) {
         this.$invoke('toast', 'show', {
@@ -96,6 +100,19 @@
       }
     }
 
+    async login () {
+      try {
+        await this.mixinLogin('index')
+        let topic = await api.getFirstTopic()
+        this.topic = topic.data
+        this.$apply()
+      } catch (e) {
+        console.error('login error', e)
+        console.error(AV.User.current().getSessionToken())
+        errorHandler(e)
+      }
+    }
+
     onPullDownRefresh () {
       if (!this.hasUserInfo) {
         wx.stopPullDownRefresh()
@@ -116,50 +133,17 @@
       }
     }
 
-    async login (userInfo) {
-      try {
-        wx.showLoading({
-          title: '正在加载...',
-          mask: true
-        })
-        let user = await AV.User.loginWithWeapp()
-        this.st = AV.User.current().getSessionToken()
-        if (!user.get('nickName')) {
-          await api.setrole(this.st)
-          await user.set(userInfo).save()
-        }
-        let topic = await api.getFirstTopic()
-        this.topic = topic.data
-        this.$apply()
-        // this.$broadcast('topicLoad')
-      } catch (e) {
-        console.error('login error', e)
-        console.error(AV.User.current().getSessionToken())
-        this._showToast('登录出错，\n请在公众号留言')
-      }
-    }
-
     _showToast (title) {
       this.methods['showToast'].call(this, title)
     }
 
     onLoad() {
-      let that = this
-      if (!this.hasUserInfo) {
-        wx.redirectTo({
-          url: 'auth'
-        })
-        return
-      }
-      wx.getUserInfo({
-        success: function(res) {
-          that.userInfo = res.userInfo
-          that.hasUserInfo = true
-          that.login(res.userInfo)
-          that.$parent.globalData.userInfo = res.userInfo
-          that.$apply()
-        }
+      wx.showLoading({
+        title: '正在加载...',
+        mask: true
       })
+      wx.showNavigationBarLoading()
+      this.login()
     }
 
     onHide() {

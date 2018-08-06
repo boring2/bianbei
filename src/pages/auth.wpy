@@ -1,23 +1,15 @@
 <style lang="less" scoped>
-  .infoWrapper {
+  .auth-wrap {
+    height: 100vh;
     display: flex;
-    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    align-items:center;
-  }
-  .avatar {
-    width: 200rpx;
-    border-radius: 50%;
-  }
-  .content {
-    text-align: center;
-    margin-top: 100rpx;
   }
 </style>
 <template>
   <view class="container">
-    <view>
-      <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取微信权限 </button>
+    <view class="auth-wrap">
+      <button type="primary" wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 开启创作之旅 </button>
     </view>
   </view>
 </template>
@@ -26,21 +18,26 @@
 import wepy from 'wepy'
 export default class Me extends wepy.page {
   data = {
-    hasUserInfo: false
+    hasUserInfo: false,
+    from: 'index'
   }
 
-  async getUserInfo (e) {
-    this.userInfo = e.detail.userInfo
-    this.hasUserInfo = true
-    this.$parent.globalData.userInfo = e.detail.userInfo
-    this.$parent.globalData.hasUserInfo = true
-    wx.setStorageSync('hasUserInfo', true)
-    wx.reLaunch({
-      url: 'index'
-    })
+  methods = {
+    getUserInfo (e) {
+      this.userInfo = e.detail.userInfo
+      this.hasUserInfo = true
+      this.$parent.globalData.userInfo = e.detail.userInfo
+      this.$parent.globalData.hasUserInfo = true
+      wx.setStorageSync('hasUserInfo', true)
+      wx.reLaunch({
+        url: this.from
+      })
+    }
   }
-  onLoad() {
 
+  onLoad(options) {
+    console.log(options.from)
+    this.from = options.from || 'index'
   }
 }
 </script>

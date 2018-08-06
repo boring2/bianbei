@@ -105,7 +105,7 @@ router.post('/', function (req, res, next) {
         }
       })
 
-      if (userIdeas.length > limitLength - 1) {
+      if (userIdeas.length > limitLength - 1 && !isCheckout) {
         throw new Error('这个版本你已经贡献了5个想法了，请换一个版本试试。')
       } else {
         if (!isCheckout) {

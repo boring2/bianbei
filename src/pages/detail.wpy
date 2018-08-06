@@ -13,11 +13,14 @@
 import wepy from 'wepy'
 import Detail from '../components/detail'
 import api from '../utils/api'
-import AV from 'leancloud-storage'
+import LoginMixin from '../mixins/login'
+import errorHandler from '../utils/error'
 
 export default class DetailPage extends wepy.page {
+  mixins = [LoginMixin]
+
   config = {
-    navigationBarTitleText: '编呗过往',
+    navigationBarTitleText: '编呗历史',
     onReachBottomDistance: 20,
     enablePullDownRefresh: true,
     backgroundTextStyle: 'dark'
@@ -47,6 +50,18 @@ export default class DetailPage extends wepy.page {
     }
   }
 
+  async login (id) {
+    try {
+      await this.mixinLogin('detail')
+      api.getTopic(id).then((topic) => {
+        this.topic = topic.data
+        this.$apply()
+      })
+    } catch (e) {
+      errorHandler(e)
+    }
+  }
+
   onShareAppMessage () {
     return {
       title: this.topic.content,
@@ -59,13 +74,9 @@ export default class DetailPage extends wepy.page {
       title: '正在加载...',
       mask: true
     })
-    this.userInfo = this.$parent.globalData.userInfo
+    wx.showNavigationBarLoading()
     let id = options.id
-    this.st = AV.User.current().getSessionToken()
-    api.getTopic(id).then((topic) => {
-      this.topic = topic.data
-      this.$apply()
-    })
+    this.login(id)
   }
 
   onPullDownRefresh () {

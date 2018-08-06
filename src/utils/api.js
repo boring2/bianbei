@@ -1,7 +1,7 @@
 import wepy from 'wepy'
 
-// let domain = 'http://127.0.0.1:3000'
-let domain = 'https://bianbei.leanapp.cn'
+let domain = 'http://127.0.0.1:3000'
+// let domain = 'https://bianbei.leanapp.cn'
 
 let url = {
   firstTopic: {
@@ -22,17 +22,28 @@ let url = {
   }
 }
 
+let errorHandler = function (res) {
+  wx.hideLoading()
+  wx.hideNavigationBarLoading()
+  if (res.statusCode !== 200) {
+    throw new Error(res.statusCode)
+  }
+  return res
+}
+
 let api = {
   getFirstTopic () {
-    return wepy.request(url.firstTopic.url)
+    return wepy.request(url.firstTopic.url).then(errorHandler)
   },
 
   getTopics () {
-    return wepy.request(url.topic.url)
+    return wepy.request({
+      url: url.topic.url
+    }).then(errorHandler)
   },
 
   getTopic (id) {
-    return wepy.request(`${url.topic.url}/${id}`)
+    return wepy.request(`${url.topic.url}/${id}`).then(errorHandler)
   },
 
   postTopic (data, session) {
@@ -43,15 +54,15 @@ let api = {
       header: {
         'X-LC-Session': session
       }
-    })
+    }).then(errorHandler)
   },
 
   getVersion (id) {
-    return wepy.request(`${url.version.url}/${id}`)
+    return wepy.request(`${url.version.url}/${id}`).then(errorHandler)
   },
 
   getVersionBaseInfo (id) {
-    return wepy.request(`${url.version.baseInfoUrl}/${id}`)
+    return wepy.request(`${url.version.baseInfoUrl}/${id}`).then(errorHandler)
   },
 
   getIdea (id, session) {
@@ -60,7 +71,7 @@ let api = {
       header: {
         'X-LC-Session': session
       }
-    })
+    }).then(errorHandler)
   },
 
   /// data is {
@@ -74,7 +85,7 @@ let api = {
       header: {
         'X-LC-Session': session
       }
-    })
+    }).then(errorHandler)
   },
 
   /// type is 'like | unlike | report'
@@ -86,7 +97,7 @@ let api = {
       header: {
         'X-LC-Session': session
       }
-    })
+    }).then(errorHandler)
   },
 
   setrole (session) {
@@ -99,7 +110,7 @@ let api = {
       header: {
         'X-LC-Session': session
       }
-    })
+    }).then(errorHandler)
   }
 }
 
