@@ -1,4 +1,4 @@
-import wepy from 'wepy';
+import wepy from 'wepy'
 import api from '../utils/api'
 import AV from 'leancloud-storage'
 export default class LoginMixin extends wepy.mixin {
@@ -16,6 +16,7 @@ export default class LoginMixin extends wepy.mixin {
       wx.setStorageSync('st', st)
       wx.setStorageSync('userId', user.id)
       if (!user.get('nickName')) {
+        let userInfo = this.$parent.globalData.userInfo || {}
         await api.setrole(st)
         await user.set(userInfo).save()
       }
