@@ -52,12 +52,15 @@ export default class DetailPage extends wepy.page {
 
   async login (id) {
     try {
-      await this.mixinLogin('detail')
-      api.getTopic(id).then((topic) => {
-        this.topic = topic.data
-        this.$apply()
-      })
+      let login = await this.mixinLogin('detail')
+      if (!login) {
+        return
+      }
+      let topicData = await api.getTopic(id)
+      this.topic = topicData.data
+      this.$apply()
     } catch (e) {
+      console.error('login err detail')
       errorHandler(e)
     }
   }

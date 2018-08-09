@@ -50,15 +50,21 @@ export default class extends wepy.app {
       'list': [
         {
           'pagePath': 'pages/index',
-          'text': '今日'
+          'text': '今日',
+          'iconPath': 'images/today@2x.png',
+          'selectedIconPath': 'images/today_active@2x.png'
         },
         {
           'pagePath': 'pages/past',
-          'text': '历史'
+          'text': '历史',
+          'iconPath': 'images/history@2x.png',
+          'selectedIconPath': 'images/histroy_active@2x.png'
         },
         {
           'pagePath': 'pages/me',
-          'text': '我'
+          'text': '我',
+          'iconPath': 'images/me@2x.png',
+          'selectedIconPath': 'images/me_active@2x.png'
         }
       ]
     }

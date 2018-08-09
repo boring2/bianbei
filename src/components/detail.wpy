@@ -63,13 +63,25 @@
     text-align: center;
     .btn-new {
       display: inline-block;
-      margin: 50rpx 0;
+      margin: 50rpx 0 80rpx 0;
       width: 90%;
       overflow: initial;
       color: rgb(19, 122, 216);
       background: white;
+      font-size: 40rpx;
+      font-weight: 400;
+      vertical-align: middle;
       &::after {
-        border: 1px dashed #000 !important;
+        border: 2rpx dashed #000 !important;
+      }
+      .plus {
+        width: 50rpx;
+        height: 50rpx;
+        vertical-align: middle;
+      }
+      text {
+        vertical-align:middle;
+        margin-left: 20rpx;
       }
     }
   }
@@ -81,7 +93,6 @@
     left: 0;
     display: block;
     background: white;
-    border: 1px solid black;
     input {
       height: 80rpx;
       padding: 20rpx;
@@ -124,12 +135,15 @@
         </view>
       </repeat>
     </view>
-    <view class="btn-new-wrap">
-      <button class="btn-new" @tap="handleReply(null, 0, 0))">新剧情</button>
+    <view class="btn-new-wrap" id="btn_new">
+      <button class="btn-new" @tap="handleReply(null, 0, 0))">
+        <image src="../images/plus@3x.png" class="plus" />
+        <text>新剧情</text>
+      </button>
     </view>
     <!-- <view wx:if="{{isPulling}}" class="more">正在拉取更多...</view> -->
     <view class="reply {{isReplying && isReady ? '': 'hide'}}">
-      <input confirm-type="send" placeholder="开始你的创作..." focus="{{isReplying}}" @blur="finishEnter" cursor-spacing='0' adjust-position="true" id="inputBox" @input="bindKeyInput" value="{{inputValue}}" @confirm="send"/>
+      <input confirm-type="send" placeholder="开始你的创作..." focus="{{isReplying}}" @blur="finishEnter" id="inputBox" @input="bindKeyInput" value="{{inputValue}}" @confirm="send"/>
     </view>
   </view>
 </template>
@@ -194,6 +208,7 @@
         }
       },
       handleReply (id, isCheckout, isNewVersion, e) {
+        this.$emit('newBtnClick')
         let lastId = null
         if (this.ideas.length) {
           lastId = this.ideas[this.ideas.length - 1].objectId
@@ -284,6 +299,9 @@
       },
 
       showActionSheet (ideaId, ideaIndex) {
+        if (this.isReplying) {
+          return
+        }
         let arrMap = {
           0: `赞(👏${this.ideas[ideaIndex].like || 0})`,
           1: '创作新分支',

@@ -10,19 +10,13 @@
       <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取信息权限 </button>
     </view> -->
     <scroll-view scroll-y id="scroll_content">
-      <detail :topic.sync="topic" :st.sync="st" @showToast.user="showToast" @addIdea.user="pageScrollToBottom"></detail>
+      <detail :topic.sync="topic" :st.sync="st" @addIdea.user="pageScrollToBottom"></detail>
     </scroll-view>
-    <toast />
   </view>
 </template>
 
 <script>
   import wepy from 'wepy'
-  import Panel from '@/components/panel' // alias example
-  import Counter from 'counter' // alias example
-  import List from '../components/list' // aliasFields example
-  import Group from '../components/group'
-  import Toast from 'wepy-com-toast'
   import AV from 'leancloud-storage'
   import api from '../utils/api'
   import Detail from '../components/detail'
@@ -44,13 +38,6 @@
       backgroundTextStyle: 'dark'
     }
     components = {
-      panel: Panel,
-      panel2: Panel,
-      counter1: Counter,
-      counter2: Counter,
-      list: List,
-      group: Group,
-      toast: Toast,
       detail: Detail
     }
 
@@ -61,28 +48,10 @@
       // hasUserInfo: false,
       st: '',
       userInfo: {
-
       }
     }
 
-    computed = {
-    }
-
     methods = {
-      // getUserInfo: function(e) {
-      //   this.userInfo = e.detail.userInfo
-      //   this.hasUserInfo = true
-      //   this.$parent.globalData.userInfo = e.detail.userInfo
-      //   console.log(e.detail.userInfo)
-      //   this.login(this.userInfo)
-      // },
-
-      showToast (title) {
-        this.$invoke('toast', 'show', {
-          title: title
-        })
-      },
-
       pageScrollToBottom () {
         wx.createSelectorQuery().select('#scroll_content').boundingClientRect(function(rect) {
           // 使页面滚动到底部
@@ -134,10 +103,6 @@
         title: this.topic.content,
         path: 'pages/index'
       }
-    }
-
-    _showToast (title) {
-      this.methods['showToast'].call(this, title)
     }
 
     onLoad() {

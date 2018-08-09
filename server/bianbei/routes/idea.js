@@ -212,6 +212,14 @@ router.post('/checkout', (req, res, next) => {
 
 })
 
+// router.post('/delete', (req, res, next) => {
+//   let ideaId = req.body.ideaId
+//   let preIdeaId = req.body.preIdeaId
+//   let versionId = req.body.versionId
+
+//   var query = new AV.Query(DM.Idea)
+// })
+
 // 点赞idea
 router.post('/like', likeHander('like'))
 // 点踩idea
@@ -263,5 +271,6 @@ function likeHander(type) {
     })
   }
 }
+
 
 module.exports = router
