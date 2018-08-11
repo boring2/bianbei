@@ -3,9 +3,10 @@
   .todayTitle {
     font-size: 40rpx;
     padding: 20rpx;
-    padding-top: 100rpx;
-    background: #000;
+    padding-top: 200rpx;
     color: #fff;
+    // background-position:center center;
+    // background-repeat:no-repeat;
   }
 
   .version-btns {
@@ -115,7 +116,7 @@
 
 <template>
   <view>
-    <view class="todayTitle">
+    <view class="todayTitle" style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1)), url({{topic.img}}) center / cover no-repeat;">
       {{topic.content}}
     </view>
     <view wx:if="{{versions.length > 1}}" class="version-btns">

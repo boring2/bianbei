@@ -58,7 +58,7 @@ export default class extends wepy.app {
           'pagePath': 'pages/past',
           'text': '历史',
           'iconPath': 'images/history@2x.png',
-          'selectedIconPath': 'images/histroy_active@2x.png'
+          'selectedIconPath': 'images/history_active@2x.png'
         },
         {
           'pagePath': 'pages/me',
