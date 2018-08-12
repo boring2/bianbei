@@ -39,6 +39,17 @@
       padding: 20rpx 20rpx;
       border-bottom: 2rpx solid @border-color;
     }
+    button {
+      display: block;
+      line-height: 1.5;
+      background: transparent;
+      text-align: left;
+      padding: 20rpx 20rpx;
+      border: none;
+      color: #000;
+      &::after { border: none; }
+      // position: static;
+    }
   }
   .view-hover-class {
     background: @border-color;
@@ -52,8 +63,10 @@
     </view>
 
     <view class="list-wrap">
-      <view class="list" hover-class="view-hover-class" @tap="promise">我们的约定</view>
-      <view class="list" hover-class="view-hover-class">使用帮助</view>
+      <button class="list" @tap="promise">我们的约定</button>
+      <button class="list"
+        open-type="contact"
+      > 使用帮助 </button>
     </view>
 
     <view class="footer">
@@ -69,6 +82,7 @@ import wepy from 'wepy'
 export default class Me extends wepy.page {
   methods = {
     promise () {
+      console.log('promise')
       wx.navigateTo({
         url: 'promise'
       })

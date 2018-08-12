@@ -7,7 +7,7 @@
   justify-content: space-around;
   align-items: center;
   padding: 80rpx 40rpx;
-  border-radius: 20rpx;
+  border-radius: 10rpx;
   margin-bottom: 20rpx;
   color: white;
   .topic-title {
@@ -25,7 +25,7 @@
 <template>
  <view class="topic-view">
     <repeat for="{{topics}}" key="index" index="index" item="topic">
-      <view class="topic-wrap" @tap="tapTitle({{topic.objectId}})" style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1)), url({{topic.img}}) center / cover no-repeat;">
+      <view class="topic-wrap" @tap="tapTitle({{topic.objectId}})" style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url({{topic.img}}) center / cover no-repeat;">
         <view class="topic-title">{{topic.content}}</view>
         <view class="topic-date">{{topic.createdAt}}</view>
       </view>

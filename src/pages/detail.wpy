@@ -4,7 +4,7 @@
 <template>
   <view class="container">
     <scroll-view id="scroll_content2">
-      <detail :topic.sync="topic" :st.sync="st" @addIdea.user="pageScrollToBottom"></detail>
+      <mydetail :topic.sync="topic" :st.sync="st" @addIdea.user="pageScrollToBottom" id="detailPage"></mydetail>
     </scroll-view>
   </view>
 </template>
@@ -35,7 +35,7 @@ export default class DetailPage extends wepy.page {
   }
 
   components = {
-    detail: Detail
+    mydetail: Detail
   }
 
   methods = {
@@ -96,11 +96,11 @@ export default class DetailPage extends wepy.page {
   }
 
   onHide() {
-    this.$invoke('detail', 'clearTimer')
+    this.$invoke('mydetail', 'clearTimer')
   }
 
   onShow() {
-    this.$invoke('detail', 'fetchTimer')
+    this.$invoke('mydetail', 'fetchTimer')
   }
 }
 </script>

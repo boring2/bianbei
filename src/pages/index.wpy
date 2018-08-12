@@ -10,7 +10,7 @@
       <button wx:if="{{!hasUserInfo}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取信息权限 </button>
     </view> -->
     <scroll-view scroll-y id="scroll_content">
-      <detail :topic.sync="topic" :st.sync="st" @addIdea.user="pageScrollToBottom"></detail>
+      <detail :topic.sync="topic" :st.sync="st" @addIdea.user="pageScrollToBottom" id="indexPage"></detail>
     </scroll-view>
   </view>
 </template>
@@ -55,7 +55,6 @@
       pageScrollToBottom () {
         wx.createSelectorQuery().select('#scroll_content').boundingClientRect(function(rect) {
           // 使页面滚动到底部
-          console.log(rect)
           wx.pageScrollTo({
             scrollTop: rect.height
           })
@@ -89,13 +88,11 @@
       if (!this.hasUserInfo) {
         wx.stopPullDownRefresh()
       }
-      console.log('onPullDownRefresh')
       this.$broadcast('topicLoad')
     }
 
     onReachBottom () {
       this.$broadcast('topicLoad')
-      console.log('onReachBottom')
     }
 
     onShareAppMessage () {

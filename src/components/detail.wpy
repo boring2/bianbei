@@ -125,7 +125,7 @@
       </repeat>
     </view>
     <view class="idea-view">
-      <repeat for="{{ideas}}" key="index" index="index" item="idea">
+      <repeat for="{{currentIdeas}}" key="index" index="index" item="idea">
         <view class="ideaInfo">
           <view class="ideaInfo-wrap" @tap="showActionSheet({{idea.objectId}}, {{index}})" hover-class="view-hover-class">
             <text class="floor-number" wx:if="{{index < 9}}">#{{'0' + (index + 1)}}</text>
@@ -156,11 +156,12 @@
   import AV from 'leancloud-storage'
   import errorHandler from '../utils/error'
 
-  let todayData = {
-    topic: {},
-    versions: [],
-    ideas: []
-  }
+  // console.log('aaaaaaaaaaaaaaaaaaaa')
+  // let todayData = Object.assign({}, {
+  //   topic: {},
+  //   versions: [],
+  //   ideas: []
+  // })
   export default class Detail extends wepy.component {
     props = {
       topic: {},
@@ -168,8 +169,8 @@
     }
 
     data = {
-      versions: todayData.versions,
-      ideas: todayData.ideas[0] || [],
+      versions: [],
+      ideas: [],
       preIdeaId: '',
       currentVersionNum: 0,
       isReplying: false,
@@ -186,23 +187,24 @@
     computed = {
       currentVersion () {
         return this.versions[this.currentVersionNum] || []
+      },
+
+      currentIdeas () {
+        return this.ideas[this.currentVersionNum] || []
       }
     }
 
     methods = {
       changeVersion (num, e) {
         this.currentVersionNum = num
-        let currentVersionNumIdeas = todayData.ideas[num]
-        if (currentVersionNumIdeas) {
-          this.ideas = currentVersionNumIdeas
-        } else {
+        let currentVersionNumIdeas = this.ideas[num]
+        if (!currentVersionNumIdeas || !currentVersionNumIdeas.length) {
           wx.showLoading({
             title: '正在加载...',
             mask: true
           })
           this.getCurrentVersionNumIdeas().then((ideas) => {
-            todayData.ideas[num] = ideas
-            this.ideas = ideas
+            this.ideas.push(ideas)
             this.$apply()
             wx.hideLoading()
           })
@@ -211,8 +213,8 @@
       handleReply (id, isCheckout, isNewVersion, e) {
         this.$emit('newBtnClick')
         let lastId = null
-        if (this.ideas.length) {
-          lastId = this.ideas[this.ideas.length - 1].objectId
+        if (this.currentIdeas.length) {
+          lastId = this.currentIdeas[this.currentIdeas.length - 1].objectId
         }
         id = id === 'null' ? null : id
         this.preIdeaId = id || lastId
@@ -233,7 +235,7 @@
         this.isReplying = false
         let inputValue = this.inputValue
         const isCheckout = this.isCheckout
-        const isNewVersion = this.isNewVersion || this.ideas.length === 0
+        const isNewVersion = this.isNewVersion || this.currentIdeas.length === 0
         this.inputValue = ''
 
         if (!inputValue.trim()) {
@@ -271,22 +273,18 @@
             console.log(res.data)
             let idea = res.data.idea
             let version = res.data.version
-            // res.data.user = {}
-            // idea.user.username = AV.User.current().get('username')
-            // console.log(this.$parent)
-            // idea.user.avatarUrl = this.$parent.userInfo.avatarUrl
             if (isNewVersion || isCheckout) {
-              todayData.versions.push(version)
-              this.currentVersionNum = todayData.versions.length - 1
+              this.versions.push(version)
+              this.currentVersionNum = this.versions.length - 1
               if (isNewVersion) {
-                todayData.ideas[this.currentVersionNum] = []
+                this.ideas[this.currentVersionNum] = []
               } else {
                 let sliceIdea = this.ideas.slice(0, this.sliceIndex + 1)
-                todayData.ideas[this.currentVersionNum] = sliceIdea
+                this.ideas[this.currentVersionNum] = sliceIdea
               }
             }
-            todayData.ideas[this.currentVersionNum].push(idea)
-            this.syncData(todayData)
+            this.ideas[this.currentVersionNum].push(idea)
+            this.$apply()
             this.$emit('addIdea')
           }
         }).catch((e) => {
@@ -304,7 +302,7 @@
           return
         }
         let arrMap = {
-          0: `赞(👏${this.ideas[ideaIndex].like || 0})`,
+          0: `赞(👏${this.currentIdeas[ideaIndex].like || 0})`,
           1: '创作新分支',
           2: '删除',
           3: '举报'
@@ -315,11 +313,11 @@
         })
 
         let arr = [arrMap[0]]
-        if (this.versions.length < 3 && ideaIndex !== this.ideas.length - 1) {
+        if (this.versions.length < 3 && ideaIndex !== this.currentIdeas.length - 1) {
           arr.push(arrMap[1])
         }
-        console.log(this.ideas[ideaIndex].user.objectId, AV.User.current().id)
-        if (this.ideas[ideaIndex].user.objectId === AV.User.current().id) {
+        console.log(this.currentIdeas[ideaIndex].user.objectId, AV.User.current().id)
+        if (this.currentIdeas[ideaIndex].user.objectId === AV.User.current().id) {
           arr.push(arrMap[2])
         }
 
@@ -393,7 +391,7 @@
               duration: 2000
             })
           }
-          let list = this.ideas
+          let list = this.ideas[this.currentVersionNum]
           if (!list[index][type]) {
             list[index][type] = 1
           } else {
@@ -410,16 +408,9 @@
       this.$emit('showToast', msg)
     }
 
-    syncData (data) {
-      this.topic = data.topic
-      this.versions = data.versions
-      this.ideas = data.ideas[this.currentVersionNum] || []
-      this.$apply()
-    }
-
     async getCurrentVersionNumIdeas () {
       let currentVersionNum = this.currentVersionNum
-      let versionId = todayData.versions[currentVersionNum].objectId
+      let versionId = this.versions[currentVersionNum].objectId
       let version = await api.getVersion(versionId)
       let versionIdeas = version.data.ideas
       wx.hideNavigationBarLoading()
@@ -445,21 +436,16 @@
             mask: true
           })
         }
-        /// 设置topic
-        let topic = this.topic
-        todayData.topic = topic
-        /// 设置versions
-        let versions = topic.versions
-        todayData.versions = topic.versions
+        let versions = this.versions = this.topic.versions
 
         /// 设置ideas
         let ideas = []
         if (versions.length) {
           ideas = await this.getCurrentVersionNumIdeas()
         }
-        todayData.ideas[0] = ideas
+        this.ideas.push(ideas)
         this.isReady = true
-        this.syncData(todayData)
+        this.$apply()
         wx.hideLoading()
         wx.stopPullDownRefresh()
         this.fetchTimer()
