@@ -19,7 +19,9 @@
     margin-bottom: 20rpx;
     open-data {
       overflow:hidden;
-      display:block;
+      display: block;
+      width: 200rpx;
+      height: 200rpx;
       border-radius: 200rpx;
     }
   }
@@ -58,7 +60,7 @@
 <template>
   <view class="container">
     <view class="infoWrapper">
-      <view class="avatar"><open-data type="userAvatarUrl" ></open-data></view>
+      <view class="avatar"><open-data mode='aspectFit' type="userAvatarUrl" ></open-data></view>
       <open-data type="userNickName"></open-data>
     </view>
 
