@@ -3,7 +3,7 @@
   .todayTitle {
     font-size: 40rpx;
     padding: 20rpx;
-    padding-top: 200rpx;
+    padding-top: 300rpx;
     color: #fff;
     // background-position:center center;
     // background-repeat:no-repeat;

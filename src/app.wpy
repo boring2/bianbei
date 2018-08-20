@@ -43,7 +43,8 @@ export default class extends wepy.app {
       backgroundTextStyle: 'light',
       navigationBarBackgroundColor: '#000',
       navigationBarTitleText: '编呗',
-      navigationBarTextStyle: 'white'
+      navigationBarTextStyle: 'white',
+      navigationStyle: 'custom'
     },
     tabBar: {
       'selectedColor': '#000',
@@ -51,7 +52,7 @@ export default class extends wepy.app {
         {
           'pagePath': 'pages/index',
           'text': '今日',
-          'iconPath': 'images/1-1.png',
+          'iconPath': 'images/1-2.png',
           'selectedIconPath': 'images/1.png'
         },
         {
