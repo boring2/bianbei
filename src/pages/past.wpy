@@ -1,35 +1,69 @@
 <style lang="less">
+@border-color: rgb(220, 220, 220);
+
+.history {
+  margin-top: 100rpx;
+}
+
+.history-title {
+  font-size: 50rpx;
+  font-weight: 500;
+  margin-left: 30rpx;
+}
+.split {
+  height:1px;
+  border-top: 1px solid @border-color;
+  margin: 30rpx 0 30rpx 30rpx;
+}
 .topic-view {
-  padding: 50rpx 20rpx;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items:center;
 }
 .topic-wrap {
   display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding: 80rpx 40rpx;
+  flex-direction: column;
+  justify-content: center;
+  width: 686rpx;
+  height: 224rpx;
+  padding: 0 40rpx;
   border-radius: 10rpx;
   margin-bottom: 20rpx;
   color: white;
   .topic-title {
-    font-size: 35rpx;
-    width: 70%;
+    font-size: 36rpx;
+    width: 100%;
+    display: flex;
+    align-items:center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
   }
-  .topic-date {
-    font-size: 20rpx;
-    width: 30%;
-    text-align:right;
+  .topic-date-count {
+    font-size: 28rpx;
   }
 }
 
 </style>
 <template>
- <view class="topic-view">
-    <repeat for="{{topics}}" key="index" index="index" item="topic">
-      <view class="topic-wrap" @tap="tapTitle({{topic.objectId}})" style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url({{topic.img}}) center / cover no-repeat;">
-        <view class="topic-title">{{topic.content}}</view>
-        <view class="topic-date">{{topic.createdAt}}</view>
-      </view>
-    </repeat>
+  <view class="history-page">
+    <view class="history">
+      <text class="history-title">⏳ 历史话题</text>
+    </view>
+    <view class="split"></view>
+    <view class="topic-view">
+      <repeat for="{{topics}}" key="index" index="index" item="topic">
+        <view class="topic-wrap" @tap="tapTitle({{topic.objectId}})" style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url({{topic.img}}) center / cover no-repeat;">
+          <view class="topic-title">{{topic.content}}</view>
+          <view class="topic-date-count">
+            <view class="topic-date">🗓 {{topic.createdAt}} </view>
+          </view>
+        </view>
+      </repeat>
+    </view>
   </view>
 </template>
 

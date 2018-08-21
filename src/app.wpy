@@ -2,8 +2,10 @@
 page {
   font-family: -apple-system, '微软雅黑';
   font-weight: 200;
-  background-color: rgb(245, 245, 245);
+  background-color: #F5F5F5;
+
 }
+
 view, text {
   word-break: break-all;
 }
@@ -12,7 +14,7 @@ view {
 }
 
 .container {
-  background: rgb(245, 245, 245);
+  background: #F5F5F5;
 }
 // .container {
 //   height: 100%;
