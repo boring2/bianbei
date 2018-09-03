@@ -2,6 +2,9 @@
 
 </style>
 <template>
+  <view class="close {{isIphoneX ? 'iphonex' : ''}}" @tap="close">
+    <image src="../images/x-white@3x.png"/>
+  </view>
   <view class="container">
     <scroll-view id="scroll_content2">
       <mydetail :topic.sync="topic" :st.sync="st" @addIdea.user="pageScrollToBottom" id="detailPage"></mydetail>
@@ -38,6 +41,12 @@ export default class DetailPage extends wepy.page {
     mydetail: Detail
   }
 
+  computed = {
+    isIphoneX () {
+      return this.$parent.globalData.isIphoneX
+    }
+  }
+
   methods = {
     pageScrollToBottom () {
       wx.createSelectorQuery().select('#scroll_content2').boundingClientRect(function(rect) {
@@ -47,6 +56,9 @@ export default class DetailPage extends wepy.page {
           scrollTop: rect.height
         })
       }).exec()
+    },
+    close () {
+      wx.navigateBack()
     }
   }
 

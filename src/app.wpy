@@ -3,7 +3,6 @@ page {
   font-family: -apple-system, '微软雅黑';
   font-weight: 200;
   background-color: #F5F5F5;
-
 }
 
 view, text {
@@ -15,6 +14,22 @@ view {
 
 .container {
   background: #F5F5F5;
+}
+
+.close {
+  position: fixed;
+  left: 30rpx;
+  top: 50rpx;
+  width: 50rpx;
+  height: 50rpx;
+  z-index: 1000;
+  &.iphonex {
+    top: 100rpx;
+  }
+  image {
+    width: 100%;
+    height: 100%;
+  }
 }
 // .container {
 //   height: 100%;
@@ -76,7 +91,8 @@ export default class extends wepy.app {
   globalData = {
     userInfo: null,
     st: '',
-    hasUserInfo: false
+    hasUserInfo: false,
+    isIphoneX: false
   }
 
   constructor () {
@@ -93,6 +109,15 @@ export default class extends wepy.app {
 
   onLaunch() {
     this.globalData.hasUserInfo = wx.getStorageSync('hasUserInfo')
+    wx.getSystemInfo({
+      success: res => {
+        // console.log('手机信息res'+res.model)
+        let modelmes = res.model
+        if (modelmes.search('iPhone X') !== -1) {
+          this.globalData.isIphoneX = true
+        }
+      }
+    })
     this.initAV()
   }
 
