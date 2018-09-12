@@ -230,12 +230,13 @@
         }
       },
       handleReply (id, isCheckout, isNewVersion, e) {
-        this.$emit('newBtnClick')
+        // this.$emit('newBtnClick')
         let lastId = null
         if (this.currentIdeas.length) {
           lastId = this.currentIdeas[this.currentIdeas.length - 1].objectId
         }
-        id = id === 'null' ? null : id
+        // 因为模板传回来的是null字符串
+        id = (id === 'null' || !id) ? null : id
         this.preIdeaId = id || lastId
         this.isReplying = true
         this.isCheckout = parseInt(isCheckout) === 1
@@ -324,7 +325,8 @@
           0: `赞(👏${this.currentIdeas[ideaIndex].like || 0})`,
           1: '创作新分支',
           2: '删除',
-          3: '举报'
+          3: '举报',
+          4: '全新故事'
         }
         let reverseMap = {}
         Object.keys(arrMap).forEach((key, index) => {
@@ -332,6 +334,7 @@
         })
 
         let arr = [arrMap[0]]
+        // 最后一条idea不需要有创作新分支
         if (this.versions.length < 3 && ideaIndex !== this.currentIdeas.length - 1) {
           arr.push(arrMap[1])
         }
@@ -342,12 +345,19 @@
 
         arr.push(arrMap[3])
 
+        if (this.versions.length < 3 && ideaIndex === 0) {
+          arr.push(arrMap[4])
+        }
+
         let handlerNums = arr.map(element => {
           return reverseMap[element]
         })
 
         let that = this
         let handler = {
+          4: function () {
+            that.methods['handleReply'].call(that, ideaId, 1, 1)
+          },
           0: function () {
             that.handleFeedBtn(ideaId, 'like', ideaIndex)
             console.log('点赞')
