@@ -32,10 +32,11 @@
 
   export default class Index extends wepy.page {
     config = {
-      navigationBarTitleText: '编呗今日',
+      // navigationBarTitleText: '编呗今日',
       onReachBottomDistance: 0,
       enablePullDownRefresh: true,
-      backgroundTextStyle: 'dark'
+      backgroundTextStyle: 'dark',
+      navigationBarTextStyle: 'white'
     }
     components = {
       detail: Detail
